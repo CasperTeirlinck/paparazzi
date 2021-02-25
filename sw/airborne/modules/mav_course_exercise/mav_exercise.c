@@ -49,7 +49,7 @@ int16_t obstacle_free_confidence = 0;   // a measure of how certain we are that 
 float moveDistance = 2;                 // waypoint displacement [m]
 float oob_haeding_increment = 5.f;      // heading angle increment if out of bounds [deg]
 const int16_t max_trajectory_confidence = 5; // number of consecutive negative object detections to be sure we are obstacle free
-
+float div_size = 0; // optic flow divergence size for object detection
 
 // needed to receive output from a separate module running on a parallel process
 #ifndef ORANGE_AVOIDER_VISUAL_DETECTION_ID
@@ -64,10 +64,27 @@ static void color_detection_cb(uint8_t __attribute__((unused)) sender_id,
     color_count = quality;
 }
 
+// also subscribe to the cv optic flow abi
+#ifndef FLOW_OPTICFLOW_ID
+#define FLOW_OPTICFLOW_ID ABI_BROADCAST
+#endif
+static abi_event optic_flow_ev;
+static void optic_flow_cb(
+    uint8_t __attribute__((unused)) sender_id, uint32_t __attribute__((unused)) stamp,
+    int16_t __attribute__((unused)) flow_x, int16_t __attribute__((unused)) flow_y,
+    int16_t __attribute__((unused)) flow_der_x, int16_t __attribute__((unused)) flow_der_y,
+    float __attribute__((unused)) quality, float size_divergence)
+{
+    div_size = size_divergence;
+}
+
 void mav_exercise_init(void)
 {
     // bind our colorfilter callbacks to receive the color filter outputs
     AbiBindMsgVISUAL_DETECTION(ORANGE_AVOIDER_VISUAL_DETECTION_ID, &color_detection_ev, color_detection_cb);
+
+    // bind the optic flow divergence to the cv optic flow module
+    AbiBindMsgOPTICAL_FLOW(FLOW_OPTICFLOW_ID, &optic_flow_ev, optic_flow_cb);
 }
 
 void mav_exercise_periodic(void)
@@ -99,6 +116,9 @@ void mav_exercise_periodic(void)
             if (!InsideObstacleZone(WaypointX(WP_TRAJECTORY),WaypointY(WP_TRAJECTORY))) {
                 navigation_state = OUT_OF_BOUNDS;
             } else if (obstacle_free_confidence == 0) {
+                // navigation_state = OBSTACLE_FOUND;
+            } else if (div_size > .3f) {
+                // use optic flow to determine if an obstacle has been found  
                 navigation_state = OBSTACLE_FOUND;
             } else {
                 moveWaypointForward(WP_GOAL, moveDistance);
@@ -127,6 +147,9 @@ void mav_exercise_periodic(void)
             }
             break;
         case HOLD:
+            increase_nav_heading(20.f);
+            navigation_state = SAFE;
+            break;
         default:
             break;
     }
