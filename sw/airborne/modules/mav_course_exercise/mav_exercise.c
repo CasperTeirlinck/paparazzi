@@ -28,17 +28,17 @@
 #define NAV_C // needed to get the nav functions like Inside...
 #include "generated/flight_plan.h"
 
-#define PRINT(string,...) fprintf(stderr, "[mav_exercise->%s()] " string,__FUNCTION__ , ##__VA_ARGS__)
+#define PRINT(string, ...) fprintf(stderr, "[mav_exercise->%s()] " string,__FUNCTION__ , ##__VA_ARGS__)
 
 uint8_t increase_nav_heading(float incrementDegrees);
 uint8_t moveWaypointForward(uint8_t waypoint, float distanceMeters);
 uint8_t moveWaypoint(uint8_t waypoint, struct EnuCoor_i *new_coor);
 
 enum navigation_state_t {
-    SAFE,
-    OBSTACLE_FOUND,
-    OUT_OF_BOUNDS,
-    HOLD
+  SAFE,
+  OBSTACLE_FOUND,
+  OUT_OF_BOUNDS,
+  HOLD
 };
 
 // define and initialise global variables
@@ -59,7 +59,6 @@ float div_size = 0; // optic flow divergence size for object detection
 #ifndef HDG_CHANGE
 #define HDG_CHANGE 20.f
 #endif
-// float hdg_change = 0; // heading change if OBSTACLE_FOUND
 float hdg_change = HDG_CHANGE; // heading change if OBSTACLE_FOUND
 
 // needed to receive output from a separate module running on a parallel process
@@ -69,10 +68,10 @@ float hdg_change = HDG_CHANGE; // heading change if OBSTACLE_FOUND
 static abi_event color_detection_ev;
 static void color_detection_cb(uint8_t __attribute__((unused)) sender_id,
                                int16_t __attribute__((unused)) pixel_x, int16_t __attribute__((unused)) pixel_y,
-                               int16_t __attribute__((unused)) pixel_width, int16_t __attribute__((unused)) pixel_height,
-                               int32_t quality, int16_t __attribute__((unused)) extra)
-{
-    color_count = quality;
+                               int16_t __attribute__((unused)) pixel_width,
+                               int16_t __attribute__((unused)) pixel_height,
+                               int32_t quality, int16_t __attribute__((unused)) extra) {
+  color_count = quality;
 }
 
 // also subscribe to the cv optic flow abi
@@ -169,48 +168,44 @@ void mav_exercise_periodic(void)
 /*
  * Increases the NAV heading. Assumes heading is an INT32_ANGLE. It is bound in this function.
  */
-uint8_t increase_nav_heading(float incrementDegrees)
-{
-    float new_heading = stateGetNedToBodyEulers_f()->psi + RadOfDeg(incrementDegrees);
+uint8_t increase_nav_heading(float incrementDegrees) {
+  float new_heading = stateGetNedToBodyEulers_f()->psi + RadOfDeg(incrementDegrees);
 
-    // normalize heading to [-pi, pi]
-    FLOAT_ANGLE_NORMALIZE(new_heading);
+  // normalize heading to [-pi, pi]
+  FLOAT_ANGLE_NORMALIZE(new_heading);
 
-    // set heading
-    nav_heading = ANGLE_BFP_OF_REAL(new_heading);
+  // set heading
+  nav_heading = ANGLE_BFP_OF_REAL(new_heading);
 
-    return false;
+  return false;
 }
 
 /*
  * Calculates coordinates of a distance of 'distanceMeters' forward w.r.t. current position and heading
  */
-static uint8_t calculateForwards(struct EnuCoor_i *new_coor, float distanceMeters)
-{
-    float heading  = stateGetNedToBodyEulers_f()->psi;
+static uint8_t calculateForwards(struct EnuCoor_i *new_coor, float distanceMeters) {
+  float heading = stateGetNedToBodyEulers_f()->psi;
 
-    // Now determine where to place the waypoint you want to go to
-    new_coor->x = stateGetPositionEnu_i()->x + POS_BFP_OF_REAL(sinf(heading) * (distanceMeters));
-    new_coor->y = stateGetPositionEnu_i()->y + POS_BFP_OF_REAL(cosf(heading) * (distanceMeters));
-    return false;
+  // Now determine where to place the waypoint you want to go to
+  new_coor->x = stateGetPositionEnu_i()->x + POS_BFP_OF_REAL(sinf(heading) * (distanceMeters));
+  new_coor->y = stateGetPositionEnu_i()->y + POS_BFP_OF_REAL(cosf(heading) * (distanceMeters));
+  return false;
 }
 
 /*
  * Sets waypoint 'waypoint' to the coordinates of 'new_coor'
  */
-uint8_t moveWaypoint(uint8_t waypoint, struct EnuCoor_i *new_coor)
-{
-    waypoint_move_xy_i(waypoint, new_coor->x, new_coor->y);
-    return false;
+uint8_t moveWaypoint(uint8_t waypoint, struct EnuCoor_i *new_coor) {
+  waypoint_move_xy_i(waypoint, new_coor->x, new_coor->y);
+  return false;
 }
 
 /*
  * Calculates coordinates of distance forward and sets waypoint 'waypoint' to those coordinates
  */
-uint8_t moveWaypointForward(uint8_t waypoint, float distanceMeters)
-{
-    struct EnuCoor_i new_coor;
-    calculateForwards(&new_coor, distanceMeters);
-    moveWaypoint(waypoint, &new_coor);
-    return false;
+uint8_t moveWaypointForward(uint8_t waypoint, float distanceMeters) {
+  struct EnuCoor_i new_coor;
+  calculateForwards(&new_coor, distanceMeters);
+  moveWaypoint(waypoint, &new_coor);
+  return false;
 }
