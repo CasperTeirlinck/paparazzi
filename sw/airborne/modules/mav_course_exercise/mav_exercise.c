@@ -49,7 +49,18 @@ int16_t obstacle_free_confidence = 0;   // a measure of how certain we are that 
 float moveDistance = 2;                 // waypoint displacement [m]
 float oob_haeding_increment = 5.f;      // heading angle increment if out of bounds [deg]
 const int16_t max_trajectory_confidence = 5; // number of consecutive negative object detections to be sure we are obstacle free
+
+#ifndef DIV_TRESHOLD
+#define DIV_TRESHOLD 0.3f
+#endif
+float div_threshold = DIV_TRESHOLD; // optic flow divergence size for object detection
 float div_size = 0; // optic flow divergence size for object detection
+
+#ifndef HDG_CHANGE
+#define HDG_CHANGE 20.f
+#endif
+// float hdg_change = 0; // heading change if OBSTACLE_FOUND
+float hdg_change = HDG_CHANGE; // heading change if OBSTACLE_FOUND
 
 // needed to receive output from a separate module running on a parallel process
 #ifndef ORANGE_AVOIDER_VISUAL_DETECTION_ID
@@ -117,7 +128,7 @@ void mav_exercise_periodic(void)
                 navigation_state = OUT_OF_BOUNDS;
             } else if (obstacle_free_confidence == 0) {
                 // navigation_state = OBSTACLE_FOUND;
-            } else if (div_size > .3f) {
+            } else if (div_size > div_threshold) {
                 // use optic flow to determine if an obstacle has been found  
                 navigation_state = OBSTACLE_FOUND;
             } else {
@@ -147,7 +158,7 @@ void mav_exercise_periodic(void)
             }
             break;
         case HOLD:
-            increase_nav_heading(20.f);
+            increase_nav_heading(hdg_change);
             navigation_state = SAFE;
             break;
         default:

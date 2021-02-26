@@ -194,3 +194,14 @@ tests/results/*
 
 # K-develop
 *.kate-swp
+
+# python venv
+venv
+
+# VSCode
+.vscode
+.vscode/**
+.favorites.json
+
+# Local run script
+/run.sh
