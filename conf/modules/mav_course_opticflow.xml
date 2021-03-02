@@ -1,0 +1,28 @@
+<!DOCTYPE module SYSTEM "module.dtd">
+
+<module name="mav_course_opticflow">
+  <doc>
+    <description>
+    This module is for the course AE4317 Autonomous Flight of Micro Air Vehicles at the TU Delft.
+    This module aims to use optic flow to avoid obstacles.
+    </description>
+    <define name="ORANGE_AVOIDER_VISUAL_DETECTION_ID" value="ABI_BROADCAST" description="which VISUAL_DETECTION message to recieve for orange pole detection."/>
+  </doc>
+    <!-- <settings>
+    <dl_settings>
+      <dl_settings name="OrangeAvoider">
+         <dl_setting var="oa_color_count_frac" min="0" step="0.01" max="0.5"/>
+      </dl_settings>
+    </dl_settings>
+  </settings> -->
+  
+  <depends>cv_detect_color_object</depends>
+  <header>
+    <file name="mav_course_opticflow.h"/>
+  </header>
+  <init fun="mav_course_opticflow_init()"/>
+  <periodic fun="mav_course_opticflow_periodic()" freq="4"/>
+  <makefile target="ap|nps">
+    <file name="mav_course_opticflow.c"/>
+  </makefile>
+</module>
