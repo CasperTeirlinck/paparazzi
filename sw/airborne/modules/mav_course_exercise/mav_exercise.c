@@ -108,7 +108,10 @@ void mav_exercise_periodic(void)
     // front_camera defined in airframe xml, with the video_capture module
     int32_t color_count_threshold = oa_color_count_frac * front_camera.output_size.w * front_camera.output_size.h;
 
-    PRINT("Color_count: %d  threshold: %d state: %d \n", color_count, color_count_threshold, navigation_state);
+    // PRINT("Color_count: %d  threshold: %d state: %d \n", color_count, color_count_threshold, navigation_state);
+
+    PRINT("divergence = %.2f state: %d \n", div_size, navigation_state);
+
 
     // update our safe confidence using color threshold
     if(color_count < color_count_threshold){
@@ -125,7 +128,7 @@ void mav_exercise_periodic(void)
             moveWaypointForward(WP_TRAJECTORY, 1.5f * moveDistance);
             if (!InsideObstacleZone(WaypointX(WP_TRAJECTORY),WaypointY(WP_TRAJECTORY))) {
                 navigation_state = OUT_OF_BOUNDS;
-            } else if (obstacle_free_confidence == 0) {
+            // } else if (obstacle_free_confidence == 0) {
                 // navigation_state = OBSTACLE_FOUND;
             } else if (div_size > div_threshold) {
                 // use optic flow to determine if an obstacle has been found  

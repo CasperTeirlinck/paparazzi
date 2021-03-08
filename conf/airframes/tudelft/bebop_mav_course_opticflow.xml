@@ -8,27 +8,11 @@
     <target name="ap" board="bebop">
       <define name="VIDEO_CAPTURE_PATH" value="/data/ftp/internal_000/images"/>
       <define name="FILE_LOGGER_PATH" value="/data/ftp/internal_000/log"/>
-      
-      <!-- Detect orange -->
-      <define name="COLOR_OBJECT_DETECTOR_LUM_MIN1" value="30"/>
-      <define name="COLOR_OBJECT_DETECTOR_LUM_MAX1" value="170"/>
-      <define name="COLOR_OBJECT_DETECTOR_CB_MIN1" value="70"/>
-      <define name="COLOR_OBJECT_DETECTOR_CB_MAX1" value="130"/>
-      <define name="COLOR_OBJECT_DETECTOR_CR_MIN1" value="150"/>
-      <define name="COLOR_OBJECT_DETECTOR_CR_MAX1" value="190"/>
     </target>
     <target name="nps" board="pc">
       <module name="fdm" type="gazebo"/>
       <define name="VIDEO_CAPTURE_PATH" value="/tmp/paparazzi/images"/>
       <define name="FILE_LOGGER_PATH" value="/tmp/paparazzi/log"/>
-      
-      <!-- Detect orange -->
-      <define name="COLOR_OBJECT_DETECTOR_LUM_MIN1" value="41"/>
-      <define name="COLOR_OBJECT_DETECTOR_LUM_MAX1" value="183"/>
-      <define name="COLOR_OBJECT_DETECTOR_CB_MIN1" value="53"/>
-      <define name="COLOR_OBJECT_DETECTOR_CB_MAX1" value="121"/>
-      <define name="COLOR_OBJECT_DETECTOR_CR_MIN1" value="134"/>
-      <define name="COLOR_OBJECT_DETECTOR_CR_MAX1" value="249"/>
     </target>
     
     <define name="ARRIVED_AT_WAYPOINT" value="0.5"/><!-- Detect arrival at waypoint when within 0.5m -->
@@ -62,8 +46,17 @@
       <define name="COLOR_OBJECT_DETECTOR_DRAW1" value="1"/>
     </module>
     <!-- Custom Module: -->
-    <module name="mav_course_opticflow">
-      <define name="ORANGE_AVOIDER_VISUAL_DETECTION_ID" value="COLOR_OBJECT_DETECTION1_ID"/>
+    <module name="mav_course_opticflow"/>
+    
+    <module name="cv_opticflow">
+      <define name="OPTICFLOW_CAMERA" value="front_camera"/>
+      <define name="MAX_HORIZON" value="10"/>
+      <define name="OPTICFLOW_MAX_TRACK_CORNERS" value="10"/>
+      <define name="OPTICFLOW_SUBPIXEL_FACTOR" value="200"/>
+      <define name="OPTICFLOW_CORNER_METHOD" value="0"/>
+      <define name="OPTICFLOW_DEROTATION_CORRECTION_FACTOR_X" value="0.8"/>
+      <define name="OPTICFLOW_DEROTATION_CORRECTION_FACTOR_Y" value="0.85"/>
+      <define name="MAX_TRACK_CORNERS" value="10"/>
     </module>
     <module name="video_rtp_stream">
       <define name="VIEWVIDEO_CAMERA" value="front_camera"/>
@@ -106,12 +99,15 @@
     <define name="OUTPUT_HEIGHT" value="520" />
     <define name="OUTPUT_WIDTH" value="240" />
     <define name="OFFSET_X" value="0.09" />
+    <define name="OFFSET_Y" value="0.00" />
     <define name="ZOOM" value="1.25"/>
-    <define name="GAIN_GREEN1" value="10.0"/>
-    <define name="GAIN_GREEN2" value="10.0"/>
-    <define name="GAIN_BLUE" value="12.5"/>
-    <define name="GAIN_RED" value="9.0"/>
-    <define name="TARGET_EXPOSURE" value="30" />
+    <define name="GAIN_GREEN1" value="4.0"/>
+    <define name="GAIN_GREEN2" value="4.0"/>
+    <define name="GAIN_BLUE" value="5.0"/>
+    <define name="GAIN_RED" value="5.0"/>
+    <define name="TARGET_EXPOSURE" value="20" />
+    <define name="OUTPUT_SCALER" value="0.25"/>
+    <define name="TARGET_FPS" value="30" />
   </section>
 
   <section name="AIR_DATA" prefix="AIR_DATA_">
