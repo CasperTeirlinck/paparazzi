@@ -17,7 +17,7 @@
  * along with Paparazzi; see the file COPYING.  If not, see
  * <http://www.gnu.org/licenses/>.
  */
-
+//change
 #include "mav_exercise.h"
 #include "subsystems/abi.h"
 #include "firmwares/rotorcraft/navigation.h"
