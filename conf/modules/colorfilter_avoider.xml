@@ -1,0 +1,14 @@
+<!DOCTYPE module SYSTEM "module.dtd">
+<module name="colorfilter_avoider" dir="mav_course_exercise">
+  <doc>
+    <description>Experimental obstacle avoidance based on color filtering.</description>
+  </doc>
+  <header>
+    <file name="colorfilter_avoider.h"/>
+  </header>
+  <init fun="colorfilter_avoider_init()"/>
+  <periodic fun="colorfilter_avoider_periodic()" freq="4.0"/>
+  <makefile>
+    <file name="colorfilter_avoider.c"/>
+  </makefile>
+</module>
