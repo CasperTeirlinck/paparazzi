@@ -31,10 +31,6 @@
 #define COLORFILTER_AVOIDER_FPS 0 ///< Default FPS (zero means run at camera fps)
 #endif
 
-#ifndef COLORFILTER_AVOIDER_DIST
-#define COLORFILTER_AVOIDER_DIST 1 ///< The distance to object when it poses a threat
-#endif
-
 enum navigation_state_t {
     SAFE,
     OBSTACLE_FOUND,
@@ -72,11 +68,11 @@ static void colorfilter_avoider_cb(struct image_t *img){
     //TODO: Do I need to make a copy of the img, so that we don't overwright the original one? If so, can I use image_copy from image.c? How do I allocate memory for the output->buf?
 
     //TODO: This colorfilt might be redundant, as we might be able to do this within find_contour by defining cont_thres
-    int count;
-    count = image_yuv422_colorfilt(img, img,
-                                   orange_low->y, orange_high->y,
-                                   orange_low->u, orange_high->u,
-                                   orange_low->v, orange_high->v);
+//    int count;
+//    count = image_yuv422_colorfilt(img, img,
+//                                   orange_low->y, orange_high->y,
+//                                   orange_low->u, orange_high->u,
+//                                   orange_low->v, orange_high->v);
 
     // Set the cont_thres for find_contour
     cont_thres->lower_y = orange_low->y;
