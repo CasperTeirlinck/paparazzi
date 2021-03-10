@@ -26,7 +26,14 @@
 #ifndef COLORFILTER_AVOIDER_H
 #define COLORFILTER_AVOIDER_H
 
+#endif  // COLORFILTER_AVOIDER_H
+
+struct HSI_color{
+    uint8 y;
+    uint8 u;
+    uint8 v;
+};
+
 extern void colorfilter_avoider_init(void);
 extern void colorfilter_avoider_periodic(void);
 
-#endif  // COLORFILTER_AVOIDER_H
