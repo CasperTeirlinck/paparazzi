@@ -96,8 +96,6 @@ static void colorfilter_avoider_cb(struct image_t *img){
 
     //TODO: For each contour: filter them based on OpenCV moments['M00']
 
-    //TODO: broken git, can't push/pull
-
 }
 
 
