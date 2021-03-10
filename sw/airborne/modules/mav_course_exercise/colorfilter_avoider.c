@@ -24,25 +24,47 @@
  */
 
 #include "modules/mav_course_exercise/colorfilter_avoider.h"
+#include "modules/computer_vision/opencv_contour.h"
+#include "modules/computer_vision/lib/vision/image.h"
+
+#ifndef COLORFILTER_AVOIDER_FPS
+#define COLORFILTER_AVOIDER_FPS 0 ///< Default FPS (zero means run at camera fps)
+#endif
 
 
-// TODO: define color ranges
+// define color ranges
+struct HSI_color{
+    uint8 y;
+    uint8 u;
+    uint8 v;
+};
+struct HSI_color orange_low = {75, 0, 150};
+struct HSI_color orange_high = {115, 255, 255};
 
-//TODO: find_object_centroid from cv_detect_color_object
+struct image_t *colorfilter_avoider_cb(struct image_t *img){
+    int count = image_yuv422_colorfilt(img, img,
+                                       orange_low->y, orange_high->y,
+                                       orange_low->u, orange_high->u,
+                                       orange_low->v, orange_high->v);
 
-//TODO: OpenCV findContours
+    //TODO: How to actually use this function?
+    find_contour((char *) img->buf, img->w, img->h);
 
-//TODO: For each contour: filter them based on OpenCV moments['M00']
+    //TODO: For each contour: filter them based on OpenCV moments['M00']
+
+    return img
+}
+
 
 void colorfilter_avoider_init(void)
 {
-  // your init code here
+    cv_add_to_device(&COLORFILTER_AVOIDER_CAMERA, object_detector1, COLORFILTER_AVOIDER_FPS);
+    return;
 }
 
 void colorfilter_avoider_periodic(void)
 {
-  // your periodic code here.
-  // freq = 4.0 Hz
+    return;
 }
 
 
