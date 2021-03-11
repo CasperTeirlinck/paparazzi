@@ -71,7 +71,6 @@ static void optic_flow_cb(
     float __attribute__((unused)) quality, float size_divergence)
 {
     div_size = size_divergence;
-    VERBOSE_PRINT("divergence = %.2f\n", size_divergence);
 }
 
 /*
@@ -96,6 +95,8 @@ void mav_course_opticflow_periodic(void)
   if(!autopilot_in_flight()){
     return;
   }
+
+  VERBOSE_PRINT("divergence = %.2f state: %d \n", div_size, navigation_state);
 
   switch (navigation_state){
     case SAFE:

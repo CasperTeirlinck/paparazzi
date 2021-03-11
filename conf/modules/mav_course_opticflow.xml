@@ -21,7 +21,7 @@
     <file name="mav_course_opticflow.h"/>
   </header>
   <init fun="mav_course_opticflow_init()"/>
-  <periodic fun="mav_course_opticflow_periodic()" freq="4"/>
+  <periodic fun="mav_course_opticflow_periodic()" freq="4" autorun="TRUE"/>
   <makefile target="ap|nps">
     <file name="mav_course_opticflow.c"/>
   </makefile>
