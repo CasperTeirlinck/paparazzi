@@ -173,8 +173,7 @@ while True:
     k = cv2.waitKeyEx(0)
     if k == 65363: i += 1 # right arrow
     if k == 65361: i -= 1 # left arrow
-
-    if k == 27: break
+    if k == 27: break # esc
 
 cv2.destroyAllWindows()
 
