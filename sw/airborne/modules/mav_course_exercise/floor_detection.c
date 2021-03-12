@@ -35,18 +35,18 @@
 #define FLOOR_DETECT_TYPE 0 ///< 0 is simulation, 1 is real flight
 #endif
 
-//TODO: Add the camera, fps, detect_type macros to the module xml
+//TODO: Add the camera, fps, detect_type macros to the module xml - Daniel
 
-//TODO: Make a new airframe xml with this module
+//TODO: Make a new airframe xml with this module - Sunyou
 
-//TODO: Define green floor color range in YUV for simulation, use the sim_poles_panels_mats
+//TODO: Define green floor color range in YUV for simulation, use the sim_poles_panels_mats - Daniel
 // I found these HSV limits to be working really well, but still need to be converted to YUV!!!
 // low_hsv = Scalar(35, 100, 90)
 // high_hsv = Scalar(45, 255, 255)
 struct YUV_color floor_simu_min = {0, 0, 0};
 struct YUV_color floor_simu_max = {0, 0, 0};
 
-//TODO: Define green floor color range in YUV for real flight, use the cyberzoo_poles_panels_mats
+//TODO: Define green floor color range in YUV for real flight, use the cyberzoo_poles_panels_mats - Daniel
 struct YUV_color floor_real_min = {0, 0, 0};
 struct YUV_color floor_real_max = {0, 0, 0};
 
@@ -58,12 +58,19 @@ enum color_set {
     REAL
 };
 
+//TODO: does this need to be static?
+struct image_t floor_img;
+
 
 static struct image_t *floor_detect_cb(struct image_t *img){
-    //TODO: Can we overwright img, or do we need to allocate memory for a new image_t?
+    //Create a copy of the input img, so we don't overwrite it
+    //TODO: do we need to free this image via image_free() at some point?
+    image_create(struct image_t *floor_img, img->w, img->h, img->type);
+
 
     //TODO: Use the normalised box filter function from OpenCV: blur(Mat src, Mat out, Size(krnl, krnl)
     //      ...with kernel size of 5.
+
 
     //TODO: Apply the colorfilter below:
     //uint32_t count = image_yuv422_colorfilt(src, out,
@@ -74,9 +81,16 @@ static struct image_t *floor_detect_cb(struct image_t *img){
 
     //TODO: Make sure the array length is equal to the width of the front camera image
     //int safe_array[520] = { };
+
+    //TODO: Measure how many pixels from the bottom the bottom of the obstacle is,
+    // ...if it is in the safe distance away from the drone, hovering at the standard altitude.
+    // ...Use this pixel count for bottom_count in ground_obstacle_detect
+    //TODO:Alternatively measure how far the obstacle must be, so that it's bottom starts clipping in the image,
+    // ...and maybe take that distance as the safe distance in the periodic?
+
     //int *safe_array_pt = ground_obstacle_detect(src, safe_array);
 
-    //TODO: Discuss the required output with Roloef
+    //TODO: Divide the safe_array - Daniel
 
 
     return img;
@@ -105,10 +119,9 @@ void floor_detection_periodic(void)
     //TODO: For most of this, check the periodic in orange_avoider_guided
 
     //TODO: Decide on a safe distance from the drone, i.e. 1 meter
-    //TODO: Measure how many pixel wide the image of the drone from the safe distance.
+    //TODO: Measure how many pixel wide (+ safety margin) the image of the drone from the safe distance.
     // ...i.e. take a picture with a drone of an other drone located 1 meter away in front of it
     //TODO: take this width in the center of the image, I'll call it safety band from now on.
-
 
 
     //TODO: switch case logic, like in orange_avoider_guided:
