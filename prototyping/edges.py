@@ -130,7 +130,6 @@ def process_frame(frame):
 
     # Get obstacle confidence
     confidence_diff = (fw_path_confidence - max_confidence)/(h - max_confidence) # because h = 0 at the top
-    print('obstacle confidence:', round(confidence_diff*100), '%')
 
     # Show obstacle warning
     if confidence_diff > 0.5:
@@ -160,19 +159,28 @@ def process_frame(frame):
     ]
     cv2.imshow('frame', np.hstack(imshow_array))
 
-# create tuning controls
+# Init loop
+i = 0
+
+# Create tuning controls
 cv2.namedWindow('controls')
 cv2.createTrackbar('frame', 'controls', 0, len(frames), lambda x: process_frame(frames[x]))
-cv2.createTrackbar('blur_size', 'controls', 3, 20, lambda x: process_frame(frame_current))
-cv2.createTrackbar('canny_threshold1', 'controls', 200, 255, lambda x: process_frame(frame_current))
-cv2.createTrackbar('canny_threshold2', 'controls', 100, 255, lambda x: process_frame(frame_current))
+cv2.createTrackbar('blur_size', 'controls', 3, 20, lambda x: process_frame(frames[i]))
+cv2.createTrackbar('canny_threshold1', 'controls', 200, 255, lambda x: process_frame(frames[i]))
+cv2.createTrackbar('canny_threshold2', 'controls', 100, 255, lambda x: process_frame(frames[i]))
 
-i = 0
+# Loop
 while True:
     process_frame(frames[i])
     k = cv2.waitKeyEx(0)
+    if k == 32: i += 1 # space
+    if k == 65513: i -= 1 # lalt
+    if k == 100: i += 1 # D
+    if k == 97: i -= 1 # A
+    if k == 65362: i += 1 # up arrow
     if k == 65363: i += 1 # right arrow
     if k == 65361: i -= 1 # left arrow
+    if k == 65364: i -= 1 # down arrow
     if k == 27: break # esc
 
 cv2.destroyAllWindows()
