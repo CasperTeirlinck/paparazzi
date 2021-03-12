@@ -27,9 +27,9 @@ frame_current = frames[0]
 
 def process_frame(frame):
     # get tunung controls
-    blur_size = 2 * cv2.getTrackbarPos('blur_size', 'parameters') + 1
-    canny_threshold1 = cv2.getTrackbarPos('canny_threshold1', 'parameters')
-    canny_threshold2 = cv2.getTrackbarPos('canny_threshold2', 'parameters')
+    blur_size = 2 * cv2.getTrackbarPos('blur_size', 'controls') + 1
+    canny_threshold1 = cv2.getTrackbarPos('canny_threshold1', 'controls')
+    canny_threshold2 = cv2.getTrackbarPos('canny_threshold2', 'controls')
 
     frame_og = frame.copy()
     frame_blur = cv2.medianBlur(frame_og, blur_size)
@@ -161,25 +161,23 @@ def process_frame(frame):
     cv2.imshow('frame', np.hstack(imshow_array))
 
 # create tuning controls
-def tuning_cb(frame):
-    process_frame(frame)
+cv2.namedWindow('controls')
+cv2.createTrackbar('frame', 'controls', 0, len(frames), lambda x: process_frame(frames[x]))
+cv2.createTrackbar('blur_size', 'controls', 3, 20, lambda x: process_frame(frame_current))
+cv2.createTrackbar('canny_threshold1', 'controls', 200, 255, lambda x: process_frame(frame_current))
+cv2.createTrackbar('canny_threshold2', 'controls', 100, 255, lambda x: process_frame(frame_current))
 
-cv2.namedWindow('parameters')
-cv2.createTrackbar('blur_size', 'parameters', 3, 20, lambda x: process_frame(frame_current))
-cv2.createTrackbar('canny_threshold1', 'parameters', 200, 255, lambda x: process_frame(frame_current))
-cv2.createTrackbar('canny_threshold2', 'parameters', 100, 255, lambda x: process_frame(frame_current))
+i = 0
+while True:
+    process_frame(frames[i])
+    k = cv2.waitKeyEx(0)
+    if k == 65363: i += 1 # right arrow
+    if k == 65361: i -= 1 # left arrow
 
-# loop trough frames
-for frame in frames:    
-    
-    frame_current = frame
-    process_frame(frame)
-
-    k = cv2.waitKey(0) & 0xff
-    if k == 27:
-        break
+    if k == 27: break
 
 cv2.destroyAllWindows()
 
 
 
+ 
