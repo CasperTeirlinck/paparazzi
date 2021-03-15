@@ -5,16 +5,16 @@ import numpy as np
 
 # dataset directory
 datasets = [
-    'cyberzoo_aggressive_flight/20190121-144646',
-    'cyberzoo_canvas_approach/20190121-151448',
-    'cyberzoo_poles/20190121-135009',
-    'cyberzoo_poles_panels/20190121-140205',
-    'cyberzoo_poles_panels_mats/20190121-142935',
-    'sim_poles/20190121-160844',
-    'sim_poles_panels/20190121-161422',
-    'sim_poles_panels_mats/20190121-161931',
+    'cyberzoo_aggressive_flight/20190121-144646', # 0
+    'cyberzoo_canvas_approach/20190121-151448',   # 1
+    'cyberzoo_poles/20190121-135009',             # 2
+    'cyberzoo_poles_panels/20190121-140205',      # 3
+    'cyberzoo_poles_panels_mats/20190121-142935', # 4
+    'sim_poles/20190121-160844',                  # 5
+    'sim_poles_panels/20190121-161422',           # 6
+    'sim_poles_panels_mats/20190121-161931',      # 7
 ]
-FRAMESDIR = datasets[4]
+FRAMESDIR = datasets[3]
 PATH = os.path.dirname(os.path.realpath(__file__))
 
 # load and sort frames from data directory
@@ -27,15 +27,16 @@ frame_current = frames[0]
 
 def process_frame(frame):
     # get tunung controls
-    blur_size = 2 * cv2.getTrackbarPos('blur_size', 'controls') + 1
-    canny_threshold1 = cv2.getTrackbarPos('canny_threshold1', 'controls')
-    canny_threshold2 = cv2.getTrackbarPos('canny_threshold2', 'controls')
+    blur_size = 2 * cv2.getTrackbarPos('blur_size', 'window') + 1
+    canny_threshold1 = cv2.getTrackbarPos('canny_threshold1', 'window')
+    canny_threshold2 = cv2.getTrackbarPos('canny_threshold2', 'window')
 
     frame_og = frame.copy()
     frame_blur = cv2.medianBlur(frame_og, blur_size)
+    # frame_blur = cv2.GaussianBlur(frame_og, (blur_size, blur_size), 0)
     frame_gray = cv2.cvtColor(frame_og, cv2.COLOR_BGR2GRAY)
-    # frame_gray_blur = cv2.GaussianBlur(frame_gray, (blur_size, blur_size), 0)
-    frame_gray_blur = cv2.medianBlur(frame_gray, blur_size)
+    frame_gray_blur = cv2.GaussianBlur(frame_gray, (blur_size, blur_size), 0)
+    # frame_gray_blur = cv2.medianBlur(frame_gray, blur_size)
     h, w = frame_gray.shape[:2]
 
     # # Sobel
@@ -157,17 +158,23 @@ def process_frame(frame):
         np.full((h, 1, 3), [0, 0, 255], np.uint8),
         frame_filled_path
     ]
-    cv2.imshow('frame', np.hstack(imshow_array))
+    cv2.imshow('window', np.hstack(imshow_array))
 
 # Init loop
+global i
 i = 0
 
 # Create tuning controls
-cv2.namedWindow('controls')
-cv2.createTrackbar('frame', 'controls', 0, len(frames), lambda x: process_frame(frames[x]))
-cv2.createTrackbar('blur_size', 'controls', 3, 20, lambda x: process_frame(frames[i]))
-cv2.createTrackbar('canny_threshold1', 'controls', 200, 255, lambda x: process_frame(frames[i]))
-cv2.createTrackbar('canny_threshold2', 'controls', 100, 255, lambda x: process_frame(frames[i]))
+def trackbar_cb(x, frames):
+    global i
+    process_frame(frames[x])
+    i = x
+
+cv2.namedWindow('window')
+cv2.createTrackbar('frame', 'window', 0, len(frames), lambda x: trackbar_cb(x, frames))
+cv2.createTrackbar('blur_size', 'window', 6, 20, lambda x: trackbar_cb(i, frames))
+cv2.createTrackbar('canny_threshold1', 'window', 165, 255, lambda x: trackbar_cb(i, frames))
+cv2.createTrackbar('canny_threshold2', 'window', 50, 255, lambda x: trackbar_cb(i, frames))
 
 # Loop
 while True:
