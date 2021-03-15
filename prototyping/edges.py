@@ -133,7 +133,7 @@ def process_frame(frame):
     confidence_diff = (fw_path_confidence - max_confidence)/(h - max_confidence) # because h = 0 at the top
 
     # Show obstacle warning
-    if confidence_diff > 0.5:
+    if confidence_diff > 0.3:
         obstacle_overlay = frame_og.copy()
         cv2.rectangle(obstacle_overlay, (0, 0), (w, h), (0, 0, 255), thickness=-1)
         frame_og = cv2.addWeighted(obstacle_overlay, 0.5, frame_og, 0.5, 0)
