@@ -26,6 +26,7 @@
 #include "modules/mav_course_exercise/floor_detection.h"
 #include "modules/computer_vision/lib/vision/image.h"
 #include "modules/mav_course_exercise/ground_obstacle_detect.h"
+#include "subsystems/abi.h"
 
 #ifndef FLOOR_DETECT_FPS
 #define FLOOR_DETECT_FPS 0 ///< Default FPS (zero means run at camera fps)
@@ -35,9 +36,7 @@
 #define FLOOR_DETECT_TYPE 0 ///< 0 is simulation, 1 is real flight
 #endif
 
-//TODO: Add the camera, fps, detect_type macros to the module xml - Daniel
-
-//TODO: Make a new airframe xml with this module - Sunyou
+//TODO: Add the camera, fps, detect_type macros to the module xml - Daniel      * Done. -S.
 
 //TODO: Define green floor color range in YUV for simulation, use the sim_poles_panels_mats - Daniel
 // I found these HSV limits to be working really well, but still need to be converted to YUV!!!
@@ -58,7 +57,7 @@ enum color_set {
     REAL
 };
 
-//TODO: does this need to be static?
+//TODO: does this need to be static?    | why would you define it outside of the function? -S.
 struct image_t floor_img;
 
 
@@ -66,6 +65,7 @@ static struct image_t *floor_detect_cb(struct image_t *img){
     //Create a copy of the input img, so we don't overwrite it
     //TODO: do we need to free this image via image_free() at some point?
     image_create(struct image_t *floor_img, img->w, img->h, img->type);
+    // TODO: there is image_copy function fyi -S.
 
 
     //TODO: Use the normalised box filter function from OpenCV: blur(Mat src, Mat out, Size(krnl, krnl)
@@ -92,8 +92,11 @@ static struct image_t *floor_detect_cb(struct image_t *img){
 
     //TODO: Divide the safe_array - Daniel
 
+    uint8_t test_val = 8;
+    AbiSendMsgFLOOR_DETECTION(ABI_FLOOR_DETECTION_ID, test_val);    // placeholder; send the result via Abi.
+    // TODO: what variables do you want to publish via Abi? -S.
 
-    return img;
+        return img;
 }
 
 void floor_detection_init(void)
@@ -109,7 +112,7 @@ void floor_detection_init(void)
         floor_max = floor_real_max;
     }
 
-    //TODO: Is this the right way to do it, or do we need to do some kind of ABI magic?
+    /// This is the right way to do it. -S.
     cv_add_to_device(&FLOOR_DETECT_CAMERA, floor_detect_cb, FLOOR_DETECT_FPS);
 
 }
@@ -123,6 +126,7 @@ void floor_detection_periodic(void)
     // ...i.e. take a picture with a drone of an other drone located 1 meter away in front of it
     //TODO: take this width in the center of the image, I'll call it safety band from now on.
 
+    /// Front camera horizontal FOV 1.8rad~=103deg (bebop2.sdf #233) -S.
 
     //TODO: switch case logic, like in orange_avoider_guided:
     // ...if obstacle inside the safety band on one side, then turn away one increment

@@ -25,14 +25,16 @@
 
 #ifndef FLOOR_DETECTION_H
 #define FLOOR_DETECTION_H
+#include "std.h"
 
-#endif  // FLOOR_DETECTION_H
 
 extern void floor_detection_init(void);
 extern void floor_detection_periodic(void);
 
 struct YUV_color{
-    uint8 y;
-    uint8 u;
-    uint8 v;
+    uint8_t y;
+    uint8_t u;
+    uint8_t v;
 };
+
+#endif  // FLOOR_DETECTION_H
