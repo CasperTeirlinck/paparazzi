@@ -1,0 +1,19 @@
+<!DOCTYPE module SYSTEM "module.dtd">
+
+<module name="mav_course_edges">
+  <doc>
+    <description>
+    This module is for the course AE4317 Autonomous Flight of Micro Air Vehicles at the TU Delft.
+    This module uses edge detection to detect and avoid obstacles.
+    </description>
+  </doc>
+  
+  <header>
+    <file name="mav_course_edges.h"/>
+  </header>
+  <init fun="mav_course_edges_init()"/>
+  <periodic fun="mav_course_edges_periodic()" freq="4" autorun="TRUE"/>
+  <makefile target="ap|nps">
+    <file name="mav_course_edges.c"/>
+  </makefile>
+</module>
