@@ -15,7 +15,7 @@ datasets = [
     'sim_poles_panels/20190121-161422',           # 6
     'sim_poles_panels_mats/20190121-161931',      # 7
 ]
-FRAMESDIR = datasets[4]
+FRAMESDIR = datasets[1]
 PATH = os.path.dirname(os.path.realpath(__file__))
 
 # load and sort frames from data directory
@@ -48,16 +48,10 @@ def process_frame(frame):
 
     # Edges: Canny
     edges = cv2.Canny(frame_blur, canny_threshold1, canny_threshold2)
-
     dialate_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
     edges_dialated = cv2.morphologyEx(edges, cv2.MORPH_CLOSE, dialate_kernel)
-    # edges_dialated = cv2.dilate(edges, dialate_kernel)
 
     # Show forward path box
-    # fw_path_size = (100, int(h/3))
-    # forward_path_overlay = frame_og.copy()
-    # cv2.rectangle(forward_path_overlay, (int(w/2 - fw_path_size[0]/2), int(h/2 - fw_path_size[1]/2)), (int(w/2 + fw_path_size[0]/2), int(h/2 + fw_path_size[1]/2)), (0, 0, 255), thickness=-1)
-    # frame_og = cv2.addWeighted(forward_path_overlay, 0.5, frame_og, 0.5, 0)
     fw_path_width = 75
     forward_path_overlay = frame_og.copy()
     cv2.rectangle(forward_path_overlay, (int(w/2 - fw_path_width/2), 0), (int(w/2 + fw_path_width/2), h), (0, 0, 255), thickness=-1)
@@ -101,7 +95,7 @@ def process_frame(frame):
         color = (255, 0, 0)
         if (boundRect_y < hor_thr) and (boundRect_area >= (boundRect_size_threshold/10000)*(w*h)) and (diff < boundRect_texture_threshold):
             color = (0, 0, 255)
-            cv2.rectangle(frame_og2, (int(boundRect[0]), int(boundRect[1])), (int(boundRect[0]+boundRect[2]), int(boundRect[1]+boundRect[3])), color, 1)
+            cv2.rectangle(frame_og2, (int(boundRect[0]), int(boundRect[1])), (int(boundRect[0]+boundRect[2]), int(boundRect[1]+boundRect[3])), color, 2)
         
         #  show all obstacles
         cv2.rectangle(frame_og, (int(boundRect[0]), int(boundRect[1])), (int(boundRect[0]+boundRect[2]), int(boundRect[1]+boundRect[3])), color, 1)
@@ -127,9 +121,9 @@ cv2.createTrackbar('frame', 'window', 0, len(frames), lambda x: trackbar_cb(x, f
 cv2.createTrackbar('Edge - blur_size', 'window', 12, 20, lambda x: trackbar_cb(i, frames))
 cv2.createTrackbar('Edge - canny_threshold1', 'window', 200, 255, lambda x: trackbar_cb(i, frames))
 cv2.createTrackbar('Edge - canny_threshold2', 'window', 100, 255, lambda x: trackbar_cb(i, frames))
-cv2.createTrackbar('BoundBox - size_threshold', 'window', 65, 100, lambda x: trackbar_cb(i, frames))
+cv2.createTrackbar('BoundBox - size_threshold', 'window', 75, 100, lambda x: trackbar_cb(i, frames))
 cv2.createTrackbar('BoundBox - texture_threshold', 'window', 350, 1000, lambda x: trackbar_cb(i, frames))
-cv2.createTrackbar('horizontal_threshold', 'window', 66, 100, lambda x: trackbar_cb(i, frames))
+cv2.createTrackbar('horizontal_threshold', 'window', 60, 100, lambda x: trackbar_cb(i, frames))
 
 # Loop
 while True:
