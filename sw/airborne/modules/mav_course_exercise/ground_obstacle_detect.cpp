@@ -31,6 +31,8 @@ int bound_int(int num, int min, int max) {
 
 
 
+
+
 //TODO: Is this correct?
 // Only checked it on my windows laptop with the sample images; still needs to be tested in paparazzi
 
@@ -42,12 +44,21 @@ int bound_int(int num, int min, int max) {
 /// <param name="bottom_count"> The width of the band on the bottom to scan for black </param>
 /// <param name="certainty"> The number of black pixels in a column of the bottom_count band, that makes that direction unsafe. </param>
 /// <returns> Array with indexes representing the column index, and values: 1 is safe, 2 is obstacle, 0 is outside of frame </returns>
-int* ground_obstacle_detect(Mat img, int safe_vector[], int bottom_count = 20, int certainty = 1) {
+int* ground_obstacle_detect(Mat img, int safe_vector[], int invert_color = 0, int bottom_count = 10, int certainty = 1) {
     // (0, 0) is top left corner
-    int threat;
+    int threat, obstacle_color, safe_color;
+
+    if (invert_color == 0){
+        obstacle_color = 0;
+        safe_color = 255;
+    } else{
+        obstacle_color = 255;
+        safe_color = 0;
+    }
 
     for (int col = 0; col < img.cols; col=col+1) {
         threat = 0;
+        safe_Vector[col] = 0;
         for (int row = int(img.rows) - 1; row >= 0; row--) {
             if (int(img.at<uchar>(row, col)) == 0) {
                 if (row >= int(img.rows) - bottom_count) {
@@ -66,11 +77,11 @@ int* ground_obstacle_detect(Mat img, int safe_vector[], int bottom_count = 20, i
 
             threat = bound_int(threat, 0, certainty);
 
-            if (threat == certainty) {
-                safe_vector[col] = 2;
+            if (threat == certainty && safe_vector[col] == 0) {
+                safe_vector[col] = img.rows - row - certainty;
             }
             else if (threat == 0) {
-                safe_vector[col] = 1;
+                safe_vector[col] = 0;
             }
         }
 
