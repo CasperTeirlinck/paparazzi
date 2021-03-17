@@ -25,7 +25,7 @@
 
 #include "modules/mav_course_exercise/floor_detection.h"
 #include "modules/computer_vision/lib/vision/image.h"
-#include "modules/mav_course_exercise/ground_obstacle_detect.h"
+//#include "modules/mav_course_exercise/ground_obstacle_detect.h"
 #include "subsystems/abi.h"
 
 #ifndef FLOOR_DETECT_FPS
@@ -85,24 +85,18 @@ int c_bound_int(int num, int min, int max) {
 //TODO: Trying to change the C++ openCV function from ground_obstacle_detect into a image_t friendly openCV free function.
 //      ...Still work in progress, see the TODOs below.
 /// <summary>
+/// OpenCV is for the weak.
 /// Checks the bottom_count of pixels at the bottom of each column if they are white.
 /// If more than certainty many black pixels are found at the bottom of the column, it is considered unsafe.
 /// </summary>
-/// <param name="img"> BW colorfiltered image in openCV::Mat </param>
+/// <param name="img"> colorfiltered image_t </param>
+/// <param name="invert_color"> Flase/0 -> input is colorfiltered such that obstacle is marked with white, and safe is maerked with black. You can invert this by setting to 1.
 /// <param name="bottom_count"> The width of the band on the bottom to scan for black </param>
 /// <param name="certainty"> The number of black pixels in a column of the bottom_count band, that makes that direction unsafe. </param>
 /// <returns> Array with indexes representing the column index, and values: 1 is safe, 2 is obstacle, 0 is outside of frame </returns>
 int* c_ground_obstacle_detect(struct image_t *input, int safe_vector[], int invert_color = 0, int bottom_count = 10, int certainty = 1) {
     // (0, 0) is top left corner
     int threat, obstacle_color, safe_color;
-
-    if (invert_color == 0){
-        obstacle_color = 0;
-        safe_color = 255;
-    } else{
-        obstacle_color = 255;
-        safe_color = 0;
-    }
 
 
     if (inverted_color == 1) {
@@ -113,26 +107,30 @@ int* c_ground_obstacle_detect(struct image_t *input, int safe_vector[], int inve
         uint8_t y_safe = 0, u_safe = 0, v_safe = 0;                     //black
     }
 
-    uint8_t *source = (uint8_t *)input->buf;
 
+    // Go trough all the pixels, starting from bottom left
+    uint8_t *zero = (uint8_t *)input->buf;
+    //TODO: Maybe we have to go through the width in steps of to, i.e. y+=2
+    for (uint16_t i = 0; i < input->w; y++) {
+        // Go to the bottom of the next column
+        column = zero + i + (input->h - 1)*input->w
 
-    // Go trough all the pixels
-    //TODO: The loops here are totally wrong. This starts from the top left, but we want to start at the bottom left,
-    //      ...also we want to go through the rows of each column.
-    for (uint16_t y = 0; y < input->h; y++) {
         threat = 0;
-        safe_vector[x] == 0;
-        for (uint16_t x = 0; x < input->w; x += 2) {
+        safe_vector[i] == 0;
+        for (uint16_t j = 0; j < input->h; j++) {
+            // Go up one row in this column
+            pixel = column - j*input->w
+
             if (
-                    (source[1] == y_obstacle)
-                    && (source[0] == u_obstacle)
-                    && (source[2] == v_obstacle)
+                    (pixel[1] == y_obstacle)
+                    && (pixel[0] == u_obstacle)
+                    && (pixel[2] == v_obstacle)
                     ) {
                 threat ++;
             } else if (
-                    (source[1] == y_safe)
-                    && (source[0] == u_safe)
-                    && (source[2] == v_safe)
+                    (pixel[1] == y_safe)
+                    && (pixel[0] == u_safe)
+                    && (pixel[2] == v_safe)
                     ) {
                 threat --;
             } else {
@@ -142,21 +140,50 @@ int* c_ground_obstacle_detect(struct image_t *input, int safe_vector[], int inve
 
             threat = bound_int(threat, 0, certainty);
 
-            if (threat == certainity && sfae_vector[x] == 0){
-                safe_vector[x] = input->h - y - certainty;
+            if (threat == certainity && safe_vector[i] == 0){
+                safe_vector[i] = input->h - j - certainty;
             } else if (threat == 0) {
-                safe_vector[x] == 0;
+                safe_vector[i] == 0;
             }
-
-            // Go to the next 2 pixels
-            source += 4;
         }
     }
-
     return safe_vector;
 }
 
+/// <summary>
+/// From binary array of length 5, to single decimal
+/// </summary>
+/// <param name="vector"> </param>
+/// <returns> </returns>
+uint8_t binary_encoder(int *vector){
+    int factor = 1;
+    uint8_t out = 0;
 
+    for (int i=4, i >= 0, i--){
+        out += vector[i] * factor;
+        factor * 2;
+    }
+    return out;
+}
+
+/// <summary>
+/// From decimal int, to binary array with length 5
+/// </summary>
+/// <param name="code"> </param>
+/// <returns> </returns>
+int *binary_decoder(uint8_t code){
+    int n = code;
+    int factor = 1;
+    int array[5];
+    int i = 4;
+
+    while(n > 0){
+        array[i] = n % 2;
+        n = n / 2;
+        i--;
+    }
+    return array;
+}
 
 
 static struct image_t *floor_detect_cb(struct image_t *img){
@@ -186,13 +213,35 @@ static struct image_t *floor_detect_cb(struct image_t *img){
     //TODO:Alternatively measure how far the obstacle must be, so that it's bottom starts clipping in the image,
     //      ...and maybe take that distance as the safe distance in the periodic?
 
-    int *safe_array_pt = ground_obstacle_detect(src, safe_array, 0, 50, 5);
+    int *safe_array_pt = c_ground_obstacle_detect(src, safe_array, 0, 50, 5);
 
     //TODO: Divide the safe_array - Daniel
+    //Take the closest obstacle in the given sector
+    int obstacle_sector_array[5] = {};
+    int range_low, range_high, range_increment;
+    for (int i = 0, i < 5, i++){
+        range_increment = 520/5;
+        range_low = i*range_increment;
+        range_high = range_low + range_increment;
+        for (int j = range_low, j < range_high, j++){
+            //Low value means the obstacle is close to the drone
+            //(since the value is the height of the obstacle in the image)
+            if (safe_array[j] > 0 && obstacle_sector_array[i] > safe_array[j]){
+                obstacle_sector_array[i] = 1;
+                break;
+            }
+        }
+    }
 
-    uint8_t test_val = 8;
-    AbiSendMsgFLOOR_DETECTION(ABI_FLOOR_DETECTION_ID, test_val);    // placeholder; send the result via Abi.
     // TODO: what variables do you want to publish via Abi? -S.
+    //      What about this: Assume we divide the entire width of the frame into 5 sectors: far left, near left, center, near right, far right.
+    //      If an obstacle is detected in a sector, we set the value to 1, if it's safe, set the value to 0, see the block above.
+    //      Now what we have is essentially a binary number, i.e: obstacle in the far and near left -> 11000.
+    //      We can convert this binary to decimal, and send that decimal via Abi.
+    //      Whatever is subscribed to it will need to decode it back to binary and then to an array.
+    uint8_t test_val = binary_encoder(obstacle_sector_array);
+    AbiSendMsgFLOOR_DETECTION(ABI_FLOOR_DETECTION_ID, test_val);    // placeholder; send the result via Abi.
+    //TODO: How can I log/print this?
 
     return img;
 }
@@ -214,6 +263,15 @@ void floor_detection_init(void)
 
 }
 
+
+enum navigation_state_t {
+    SAFE,
+    OBSTACLE_FOUND,
+    SEARCH_FOR_SAFE_HEADING,
+    OUT_OF_BOUNDS,
+    REENTER_ARENA
+};
+
 void floor_detection_periodic(void)
 {
     //TODO: For most of this, check the periodic in orange_avoider_guided
@@ -229,6 +287,8 @@ void floor_detection_periodic(void)
     // ...if obstacle inside the safety band on one side, then turn away one increment
     // ...if obstacle inside the safety band on BOTH side, then do some evasive manoeuvre, like rotate 90deg
     // ...if no obstacle inside the safety band, keep flying forward
+
+
 
     return;
 }
