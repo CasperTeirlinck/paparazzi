@@ -16,22 +16,20 @@
 #include <time.h>
 #include <stdio.h>
 
+// Import custom opencv functions
+#include "modules/mav_course_edges/opencv_functions.h"
+
 #define NAV_C // needed to get the nav functions like Inside...
 #include "generated/flight_plan.h"
 
-#define MAV_COURSE_EDGES_VERBOSE TRUE
-
 #define PRINT(string,...) fprintf(stderr, "[mav_course_edges->%s()] " string,__FUNCTION__ , ##__VA_ARGS__)
-#if MAV_COURSE_EDGES_VERBOSE
-#define VERBOSE_PRINT PRINT
-#else
-#define VERBOSE_PRINT(...)
-#endif
 
 static uint8_t moveWaypointForward(uint8_t waypoint, float distanceMeters);
 static uint8_t calculateForwards(struct EnuCoor_i *new_coor, float distanceMeters);
 static uint8_t moveWaypoint(uint8_t waypoint, struct EnuCoor_i *new_coor);
 static uint8_t increase_nav_heading(float incrementDegrees);
+
+struct image_t *camera_cb(struct image_t *img);
 
 enum navigation_state_t {
   SAFE,
@@ -56,10 +54,28 @@ float maxDistance = 2.25;               // max waypoint displacement [m]
  */
 void mav_course_edges_init(void)
 {
-  // Initialise random values
-  srand(time(NULL));
+  // Attach callback function to the front camera for obstacle avoidance
+  cv_add_to_device(&front_camera, camera_cb, 0);
 
 }
+
+/*
+ * callback from the camera
+ * @param img - input image to process
+ * @return img
+ */
+struct image_t *camera_cb(struct image_t *img)
+{
+
+  // (char *) img->buf
+
+  opencv_example((char *) img->buf, img->w, img->h);
+
+  PRINT("height: %s \n", img->type);
+
+  return img;
+}
+
 
 /*
  * Function that checks it is safe to move forwards, and then moves a waypoint forward or changes the heading
@@ -71,7 +87,7 @@ void mav_course_edges_periodic(void)
     return;
   }
 
-  // VERBOSE_PRINT("divergence = %.2f state: %d \n", div_size, navigation_state);
+  // PRINT("divergence = %.2f state: %d \n", div_size, navigation_state);
 
   switch (navigation_state){
     case SAFE:
