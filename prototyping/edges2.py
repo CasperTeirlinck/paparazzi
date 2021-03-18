@@ -15,7 +15,7 @@ datasets = [
     'sim_poles_panels/20190121-161422',           # 6
     'sim_poles_panels_mats/20190121-161931',      # 7
 ]
-FRAMESDIR = datasets[1]
+FRAMESDIR = datasets[4]
 PATH = os.path.dirname(os.path.realpath(__file__))
 
 # load and sort frames from data directory
@@ -29,6 +29,7 @@ i = 0
 
 def process_frame(frame):
     
+    
     # Get tunung controls
     blur_size = 2 * cv2.getTrackbarPos('Edge - blur_size', 'window') + 1
     canny_threshold1 = cv2.getTrackbarPos('Edge - canny_threshold1', 'window')
@@ -38,13 +39,16 @@ def process_frame(frame):
     hor_thr = cv2.getTrackbarPos('horizontal_threshold', 'window')
     
     # Setup frames
+    h, w = frame.shape[:2]
+    frame = cv2.resize(frame, (int(w/2), int(h/2)))
+    h, w = frame.shape[:2]
     frame_og = frame.copy()
     frame_og2 = frame.copy()
     frame_blur = cv2.medianBlur(frame_og, blur_size)
     frame_gray = cv2.cvtColor(frame_og, cv2.COLOR_BGR2GRAY)
     # frame_gray_blur = cv2.GaussianBlur(frame_gray, (blur_size, blur_size), 0)
     # frame_gray_blur = cv2.medianBlur(frame_gray, blur_size)
-    h, w = frame_gray.shape[:2]
+    print(frame.shape)
 
     # Edges: Canny
     edges = cv2.Canny(frame_blur, canny_threshold1, canny_threshold2)
