@@ -28,7 +28,6 @@
 //#include "modules/mav_course_exercise/ground_obstacle_detect.h"
 #include "subsystems/abi.h"
 
-
 #ifndef FLOOR_DETECT_FPS
 #define FLOOR_DETECT_FPS 0 ///< Default FPS (zero means run at camera fps)
 #endif
@@ -43,43 +42,21 @@
 // I found these HSV limits to be working really well, but still need to be converted to YUV!!!
 // low_hsv = Scalar(35, 100, 90)
 // high_hsv = Scalar(45, 255, 255)
-//struct YUV_color floor_simu_min = {0, 0, 0};
-//struct YUV_color floor_simu_max = {0, 0, 0};
-uint8_t floor_simu_min_y = 0;
-uint8_t floor_simu_min_u = 0;
-uint8_t floor_simu_min_v = 0;
-
-uint8_t floor_simu_max_y = 255;
-uint8_t floor_simu_max_u = 130;
-uint8_t floor_simu_max_v = 130;
+struct YUV_color floor_simu_min = {0, 0, 0};
+struct YUV_color floor_simu_max = {0, 0, 0};
 
 //TODO: Define green floor color range in YUV for real flight, use the cyberzoo_poles_panels_mats - Daniel
-//struct YUV_color floor_real_min = {0, 0, 0};
-//struct YUV_color floor_real_max = {0, 0, 0};
-uint8_t floor_real_min_y = 0;
-uint8_t floor_real_min_u = 0;
-uint8_t floor_real_min_v = 0;
+struct YUV_color floor_real_min = {0, 0, 0};
+struct YUV_color floor_real_max = {0, 0, 0};
 
-uint8_t floor_real_max_y = 0;
-uint8_t floor_real_max_u = 0;
-uint8_t floor_real_max_v = 0;
-
-//struct YUV_color floor_min;
-//struct YUV_color floor_max;
-
-uint8_t floor_min_y;
-uint8_t floor_min_u;
-uint8_t floor_min_v;
-
-uint8_t floor_max_y;
-uint8_t floor_max_u;
-uint8_t floor_max_v;
-
+struct YUV_color floor_min;
+struct YUV_color floor_max;
 
 enum color_set {
     SIMU,
     REAL
 };
+
 
 
 
@@ -90,7 +67,7 @@ enum color_set {
 /// <param name="min"></param>
 /// <param name="max"></param>
 /// <returns></returns>
-int bound_int(int num, int min, int max) {
+int c_bound_int(int num, int min, int max) {
     int out;
     if (num < min) {
         out = min;
@@ -117,44 +94,35 @@ int bound_int(int num, int min, int max) {
 /// <param name="bottom_count"> The width of the band on the bottom to scan for black </param>
 /// <param name="certainty"> The number of black pixels in a column of the bottom_count band, that makes that direction unsafe. </param>
 /// <returns> Array with indexes representing the column index, and values: 1 is safe, 2 is obstacle, 0 is outside of frame </returns>
-int* c_ground_obstacle_detect(struct image_t *input, int safe_vector[], int invert_color, int bottom_count, int certainty) {
+//int* c_ground_obstacle_detect(struct image_t *input, int safe_vector[], int invert_color=0, int bottom_count=10, int certainty=1) {
+int* c_ground_obstacle_detect(struct image_t *input, int safe_vector[], int invert_color, int bottom_count0, int certainty) {
     // (0, 0) is top left corner
     int threat, obstacle_color, safe_color;
-    uint8_t y_obstacle, u_obstacle, v_obstacle;         //black
-    uint8_t y_safe, u_safe, v_safe;
 
-
+    uint8_t y_obstacle = 255, u_obstacle = 0, v_obstacle = 0;       //white
+    uint8_t y_safe = 0, u_safe = 0, v_safe = 0;                     //black
     if (invert_color == 1) {
-        y_obstacle = 0;
-        u_obstacle = 0;
-        v_obstacle = 0;         //black
-        y_safe = 255;
-        u_safe = 0;
-        v_safe = 0;                   //white
-    } else{
-        y_obstacle = 255;
-        u_obstacle = 0;
-        v_obstacle = 0;       //white
-        y_safe = 0;
-        u_safe = 0;
-        v_safe = 0;                     //black
+        uint8_t y_obstacle = 0, u_obstacle = 0, v_obstacle = 0;         //black
+        uint8_t y_safe = 255, u_safe = 0, v_safe = 0;                   //white
     }
+//    else{
+//        uint8_t y_obstacle = 255, u_obstacle = 0, v_obstacle = 0;       //white
+//        uint8_t y_safe = 0, u_safe = 0, v_safe = 0;                     //black
+//    }
 
 
     // Go trough all the pixels, starting from bottom left
     uint8_t *zero = (uint8_t *)input->buf;
-    uint8_t *column;
-    uint8_t *pixel;
     //TODO: Maybe we have to go through the width in steps of to, i.e. y+=2
     for (uint16_t i = 0; i < input->w; i++) {
         // Go to the bottom of the next column
-        column = zero + i + (input->h - 1) * input->w;
+        uint8_t *column = zero + i + (input->h - 1)*input->w;
 
         threat = 0;
         safe_vector[i] == 0;
         for (uint16_t j = 0; j < input->h; j++) {
             // Go up one row in this column
-            pixel = column - j * input->w;
+            uint8_t *pixel = column - j*input->w;
 
             if (
                     (pixel[1] == y_obstacle)
@@ -170,11 +138,10 @@ int* c_ground_obstacle_detect(struct image_t *input, int safe_vector[], int inve
                 threat --;
             } else {
                     //TODO: it shouldn't come to this, raise some error or something
-                    VERBOSE_PRINT("ERRROOOOOOOOOOOOOOOOOOOR!!1");
-
+                    return safe_vector;
             }
 
-            threat = bound_int(threat, 0, certainty);
+            threat = c_bound_int(threat, 0, certainty);
 
             if (threat == certainty && safe_vector[i] == 0){
                 safe_vector[i] = input->h - j - certainty;
@@ -209,6 +176,7 @@ uint8_t binary_encoder(int *vector){
 /// <returns> </returns>
 int *binary_decoder(uint8_t code){
     int n = code;
+    int factor = 1;
     int array[5];
     int i = 4;
 
@@ -221,26 +189,22 @@ int *binary_decoder(uint8_t code){
 }
 
 
-
-uint8_t floor_detect_cb(struct image_t *img){
+static struct image_t *floor_detect_cb(struct image_t *img){
     //Create a copy of the input img, so we don't overwrite it
-    int obstacle_sector_array[5];
     struct image_t floor_img;
-    image_create(&floor_img, img->w, img->h, img->type);
     image_copy(img, &floor_img);
 
 
+    //TODO: Use the normalised box filter function from OpenCV: blur(Mat src, Mat out, Size(krnl, krnl)
+    //      ...with kernel size of 5.
+    //      Hang on, it might not be necessary.
 
 
     //Apply the colorfilter for the range of greens
-    uint32_t count = image_yuv422_colorfilt(&floor_img, &floor_img,
-                                            floor_min_y, floor_max_y,
-                                            floor_min_u, floor_max_u,
-                                            floor_min_v, floor_max_v);
-//    uint32_t count = image_yuv422_colorfilt(&floor_img, &floor_img,
-//                                            55, 200,
-//                                            0, 130,
-//                                            0, 130);
+    uint16_t count = image_yuv422_colorfilt(&img, &floor_img,
+                                            floor_min.y, floor_max.y,
+                                            floor_min.u, floor_max.u,
+                                            floor_min.v, floor_max.v);
 
 
     //TODO: Make sure the array length is equal to the width of the front camera image
@@ -256,18 +220,18 @@ uint8_t floor_detect_cb(struct image_t *img){
 
     //TODO: Divide the safe_array - Daniel
     //Take the closest obstacle in the given sector
+    int obstacle_sector_array[5] = {};
     int range_low, range_high, range_increment;
     for (int i = 0; i < 5; i++){
         range_increment = 520/5;
         range_low = i*range_increment;
         range_high = range_low + range_increment;
         for (int j = range_low; j < range_high; j++){
-            if (safe_array[j] > 0){
+            //Low value means the obstacle is close to the drone
+            //(since the value is the height of the obstacle in the image)
+            if (safe_array[j] > 0 && obstacle_sector_array[i] > safe_array[j]){
                 obstacle_sector_array[i] = 1;
                 break;
-            }
-            else {
-                obstacle_sector_array[i] = 0;
             }
         }
     }
@@ -279,47 +243,27 @@ uint8_t floor_detect_cb(struct image_t *img){
     //      We can convert this binary to decimal, and send that decimal via Abi.
     //      Whatever is subscribed to it will need to decode it back to binary and then to an array.
     uint8_t test_val = binary_encoder(obstacle_sector_array);
-    //AbiSendMsgFLOOR_DETECTION(ABI_FLOOR_DETECTION_ID, test_val);    // placeholder; send the result via Abi.
+    AbiSendMsgFLOOR_DETECTION(ABI_FLOOR_DETECTION_ID, test_val);    // placeholder; send the result via Abi.
+    //TODO: How can I log/print this?
+    /// Actually, with c pprz module, you can just use printf then it will print out on the pprz center
 
-    //TODO: How can I log/print test_val or obstacle_sector_array?
-//    printf("Obstacle sector vector: %d %d %d %d %d   encoded: %u\n", obstacle_sector_array[0], obstacle_sector_array[1], obstacle_sector_array[2], obstacle_sector_array[3], obstacle_sector_array[4], test_value)
-
-    return test_val;
+    return img;
 }
 
 void floor_detection_init(void)
 {
-//    if (FLOOR_DETECT_TYPE == SIMU){
-//        floor_min_y = floor_simu_min_y;
-//        floor_min_u = floor_simu_min_u;
-//        floor_min_v = floor_simu_min_v;
-//
-//        floor_max_y = floor_simu_max_y;
-//        floor_max_u = floor_simu_max_u;
-//        floor_max_v = floor_simu_max_v;
-//
-//    } else if(FLOOR_DETECT_TYPE == REAL){
-//        floor_min_y = floor_real_min_y;
-//        floor_min_u = floor_real_min_u;
-//        floor_min_v = floor_real_min_v;
-//
-//        floor_max_y = floor_real_max_y;
-//        floor_max_u = floor_real_max_u;
-//        floor_max_v = floor_real_max_v;
-//    }
-
-    floor_min_y = floor_simu_min_y;
-    floor_min_u = floor_simu_min_u;
-    floor_min_v = floor_simu_min_v;
-
-    floor_max_y = floor_simu_max_y;
-    floor_max_u = floor_simu_max_u;
-    floor_max_v = floor_simu_max_v;
-
     //TODO: Undistort the camera image if needed, see computer_vision/undistort_image.c maybe
 
-    cv_add_to_device(&FLOOR_DETECT_CAMERA, floor_detect_cb, FLOOR_DETECT_FPS);
 
+    if (FLOOR_DETECT_TYPE == SIMU){
+        floor_min = floor_simu_min;
+        floor_max = floor_simu_max;
+    } else if(FLOOR_DETECT_TYPE == REAL){
+        floor_min = floor_real_min;
+        floor_max = floor_real_max;
+    }
+
+    cv_add_to_device(&FLOOR_DETECT_CAMERA, floor_detect_cb, FLOOR_DETECT_FPS);
 
 }
 
@@ -331,15 +275,6 @@ enum navigation_state_t {
     OUT_OF_BOUNDS,
     REENTER_ARENA
 };
-static uint8_t moveWaypointForward(uint8_t waypoint, float distanceMeters);
-static uint8_t calculateForwards(struct EnuCoor_i *new_coor, float distanceMeters);
-static uint8_t moveWaypoint(uint8_t waypoint, struct EnuCoor_i *new_coor);
-static uint8_t increase_nav_heading(float incrementDegrees);
-static uint8_t chooseRandomIncrementAvoidance(void);
-
-enum navigation_state_t navigation_state = SEARCH_FOR_SAFE_HEADING;
-float heading_increment = 5.f;          // heading angle increment [deg]
-float maxDistance = 2.25;               // max waypoint displacement [m]
 
 void floor_detection_periodic(void)
 {
@@ -358,7 +293,8 @@ void floor_detection_periodic(void)
     // ...if no obstacle inside the safety band, keep flying forward
 
 
-    }
+
     return;
 }
+
 
