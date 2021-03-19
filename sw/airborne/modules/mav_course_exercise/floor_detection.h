@@ -28,9 +28,8 @@
 #include "std.h"
 
 
-extern void floor_detection_init(void);
-extern void floor_detection_periodic(void);
-extern uint8_t floor_detect_cb(struct image_t *img);
+void floor_detection_init(void);
+void floor_detection_periodic(void);
 int *binary_decoder(uint8_t code);
 uint8_t binary_encoder(int *vector);
 

@@ -95,7 +95,7 @@ int c_bound_int(int num, int min, int max) {
 /// <param name="certainty"> The number of black pixels in a column of the bottom_count band, that makes that direction unsafe. </param>
 /// <returns> Array with indexes representing the column index, and values: 1 is safe, 2 is obstacle, 0 is outside of frame </returns>
 //int* c_ground_obstacle_detect(struct image_t *input, int safe_vector[], int invert_color=0, int bottom_count=10, int certainty=1) {
-int* c_ground_obstacle_detect(struct image_t *input, int safe_vector[], int invert_color, int bottom_count0, int certainty) {
+int* c_ground_obstacle_detect(struct image_t *input, int safe_vector[], int invert_color, int bottom_count0, int certainty, uint8_t y_m, uint8_t y_M, uint8_t u_m, uint8_t u_M, uint8_t v_m, uint8_t v_M) {
     // (0, 0) is top left corner
     int threat, obstacle_color, safe_color;
 
@@ -114,31 +114,27 @@ int* c_ground_obstacle_detect(struct image_t *input, int safe_vector[], int inve
     // Go trough all the pixels, starting from bottom left
     uint8_t *zero = (uint8_t *)input->buf;
     //TODO: Maybe we have to go through the width in steps of to, i.e. y+=2
-    for (uint16_t i = 0; i < input->w; i++) {
+    for (uint8_t i = 0; i < input->w; i+=2) {
         // Go to the bottom of the next column
         uint8_t *column = zero + i + (input->h - 1)*input->w;
 
         threat = 0;
         safe_vector[i] == 0;
-        for (uint16_t j = 0; j < input->h; j++) {
+        for (uint8_t j = 0; j < input->h; j++) {
             // Go up one row in this column
             uint8_t *pixel = column - j*input->w;
 
             if (
-                    (pixel[1] == y_obstacle)
-                    && (pixel[0] == u_obstacle)
-                    && (pixel[2] == v_obstacle)
-                    ) {
+                    (pixel[1] >= y_m)
+                    && (pixel[1] <= y_M)
+                    && (pixel[0] >= u_m)
+                    && (pixel[0] <= u_M)
+                    && (pixel[2] >= v_m)
+                    && (pixel[2] <= v_M)
+                    )  {
                 threat ++;
-            } else if (
-                    (pixel[1] == y_safe)
-                    && (pixel[0] == u_safe)
-                    && (pixel[2] == v_safe)
-                    ) {
+            } else{
                 threat --;
-            } else {
-                    //TODO: it shouldn't come to this, raise some error or something
-                    return safe_vector;
             }
 
             threat = c_bound_int(threat, 0, certainty);
@@ -189,7 +185,7 @@ int *binary_decoder(uint8_t code){
 }
 
 
-static struct image_t *floor_detect_cb(struct image_t *img){
+void floor_detect_cb(struct image_t *img){
     //Create a copy of the input img, so we don't overwrite it
     struct image_t floor_img;
     image_copy(img, &floor_img);
@@ -201,14 +197,14 @@ static struct image_t *floor_detect_cb(struct image_t *img){
 
 
     //Apply the colorfilter for the range of greens
-    uint16_t count = image_yuv422_colorfilt(&img, &floor_img,
-                                            floor_min.y, floor_max.y,
-                                            floor_min.u, floor_max.u,
-                                            floor_min.v, floor_max.v);
+//    uint16_t count = image_yuv422_colorfilt(&img, &floor_img,
+//                                            floor_min.y, floor_max.y,
+//                                            floor_min.u, floor_max.u,
+//                                            floor_min.v, floor_max.v);
 
 
     //TODO: Make sure the array length is equal to the width of the front camera image
-    int safe_array[520] = { };
+    int safe_array[260] = { };
 
     //TODO: Measure how many pixels from the bottom the bottom of the obstacle is,
     //      ...if it is in the safe distance away from the drone, hovering at the standard altitude.
@@ -216,14 +212,17 @@ static struct image_t *floor_detect_cb(struct image_t *img){
     //TODO:Alternatively measure how far the obstacle must be, so that it's bottom starts clipping in the image,
     //      ...and maybe take that distance as the safe distance in the periodic?
 
-    int *safe_array_pt = c_ground_obstacle_detect(&floor_img, safe_array, 0, 50, 5);
+    int *safe_array_pt = c_ground_obstacle_detect(&floor_img, safe_array, 0, 50, 5,
+                                                  floor_min.y, floor_max.y,
+                                                  floor_min.u, floor_max.u,
+                                                  floor_min.v, floor_max.v);
 
     //TODO: Divide the safe_array - Daniel
     //Take the closest obstacle in the given sector
     int obstacle_sector_array[5] = {};
     int range_low, range_high, range_increment;
     for (int i = 0; i < 5; i++){
-        range_increment = 520/5;
+        range_increment = 260/5;
         range_low = i*range_increment;
         range_high = range_low + range_increment;
         for (int j = range_low; j < range_high; j++){
@@ -247,7 +246,6 @@ static struct image_t *floor_detect_cb(struct image_t *img){
     //TODO: How can I log/print this?
     /// Actually, with c pprz module, you can just use printf then it will print out on the pprz center
 
-    return img;
 }
 
 void floor_detection_init(void)
