@@ -49,100 +49,81 @@ Mat get_obstacles_edgebox(Mat img, int w, int h) {
   Mat image_gray;
   cvtColor(M, image_gray, CV_YUV2GRAY_Y422);
   #else
+  // Original image
   Mat image;
   image = img;
+  // Cropped image
+  Mat image_crop;
+  image_crop = image(Rect((int)(0.4*h), 0, (int)(0.6*h), w));
   // Convert to OpenCV grayscale
   Mat image_gray;
   cvtColor(image, image_gray, CV_BGR2GRAY);
+  // Blurred image
+  Mat image_blur;
+  image.copyTo(image_blur);
   #endif
 
   // Get rid of the noise by blurring
-  // blur(image_gray, image_gray, Size(3,3)); // Why example with size (5,5)??  
-  GaussianBlur(image_gray, image_gray, Size(5, 5), 0);
+  medianBlur(image_blur, image_blur, 25);
+  // GaussianBlur(image_gray, image_gray, Size(5, 5), 0);
 
-  /*
   // using canny to detect the edges of the images
-  Mat canny_image_output;
-  int edgeThresh = 35;
+  Mat image_canny;
+  int edgeThresh = 100;
+  Canny(image_blur, image_canny, edgeThresh * 2, edgeThresh);
 
-  Canny(gray_image, canny_image_output, edgeThresh, edgeThresh * 3); // example says times 2 not 3 so why Casper?
+  // Finding contours
+  vector<vector<Point>> contours;
+  findContours(image_canny, contours, RETR_TREE, CHAIN_APPROX_SIMPLE);
 
-  //Finding the countours and save them to vectors
-  vector<vector<point> > contours;
+  // Getting and filtering the bounding boxes
+  vector<Rect> boundRect(contours.size());
+  Mat boundRect_img;
+  int boundRect_area;
+  int boundRect_avg;
+  Mat boundRect_diff_;
+  int boundRect_diff;
 
-  // Convert the image to an OpenCV Mat
-  cvtColor(M, image, CV_YUV2BGR_Y422);
-  // Blur it, because we can
-  blur(image, image, Size(5, 5));
-  // Convert back to YUV422 and put it in place of the original image
-  colorbgr_opencv_to_yuv422(image, img, w, h);
-  */
+  vector<Rect> boundRect_obst;
 
-  // Getting the bounding boxes
-  
-  // Implement contours with
+  for(size_t i = 0; i < contours.size(); i++)
+  {
+    boundRect[i] = boundingRect(contours[i]);
+
+    // get texture
+    boundRect_area = boundRect[i].width * boundRect[i].height;
+    boundRect_img = image_gray(boundRect[i]);
+    boundRect_avg = sum(boundRect_img)[0]/boundRect_area;
+    pow(boundRect_img - boundRect_avg, 2, boundRect_diff_);
+    boundRect_diff = sum(boundRect_diff_)[0]/boundRect_area;
+
+    // filter boxes
+    if (
+      ((float)boundRect_area >= (75.f/10000.f)*(w*h)) && 
+      (boundRect_diff < 100)
+      )
+    {
+      boundRect_obst.insert(boundRect_obst.end(), boundRect[i]);
+    }
+
+  }
+
+  // Draw output
+  Mat drawing = Mat::zeros(image_canny.size(), CV_8UC3);
+  for(size_t i = 0; i< boundRect_obst.size(); i++)
+  {
+    // This picks random color, change this to only red
+    Scalar color = Scalar(0, 0, 255); 
+    // This draws the contour
+    // drawContours(drawing, contours, (int)i, color);
+    // This draws the rectangle
+    rectangle(image, boundRect_obst[i].tl(), boundRect_obst[i].br(), color, 2);
+  }
 
   // Convert image back to YUV422
   #if !USEDATASET
   colorbgr_opencv_to_yuv422(image, img, w , h);
   #else
-  return image_gray;
+  return image_crop;
   #endif
 }
-
-/* 
- * Function to save a frame to disk for debugging
- * Referenced from video_capture.c
- */
-// void save_frame(void) {
-//   // Create output folder if necessary
-//   if (access(save_dir, F_OK)) {
-//     char save_dir_cmd[256];
-//     sprintf(save_dir_cmd, "mkdir -p %s", save_dir);
-//     if (system(save_dir_cmd) != 0) {
-//       printf("[video_capture] Could not create images directory %s.\n", save_dir);
-//       return;
-//     }
-//   }
-// }
-
-// void edge_box(int, void* )
-// {
-//   // using canny to detect the edges of the images
-//   Mat canny_image_output;
-//   int edgeThresh = 100;
-
-//   Canny(gray_image, canny_image_output, edgeThresh * 2, edgeThresh); // example says times 2 not 3 so why Casper?
-
-//   //Finding the countours and save them to vectors
-//   vector<vector<Point> > contours;
-//   findContours(canny_image_output, contours, RETR_TREE, CHAIN_APPROX_SIMPLE);
-  
-//   // finding contours with aprrox to polygons of accuracy 3, contour does not need to
-//   // be closed so bool set to false
-//   vector<vector<Point>> contours_poly( contours.size() );
-//   vector<Rect> boundRect( contours.size() );
-//   vector<Point2f>centers( contours.size() );
-//   vector<float>radius( contours.size() );
-  
-
-//   for( size_t i = 0; i < contours.size(); i++ )
-//   {
-//     approxPolyDP( contours[i], contours_poly[i], 3, false );
-//     boundRect[i] = boundingRect( contours_poly[i] );
-//     // minEnclosingCircle( contours_poly[i], centers[i], radius[i] ); does not need to be circle
-//   }
-//   Mat drawing = Mat::zeros( canny_image_output.size(), CV_8UC3 );
-//   for( size_t i = 0; i< contours.size(); i++ )
-//   {
-//     // This picks random color, change this to only red
-//     Scalar color = Scalar( rng.uniform(0, 256), rng.uniform(0,256), rng.uniform(0,256) ); 
-//     //This draws the contour with the picked color
-//     drawContours( drawing, contours_poly, (int)i, color );
-//     // this draws the rectangle
-//     rectangle( drawing, boundRect[i].tl(), boundRect[i].br(), color, 2 );
-//     // cirlce does not need to be drawn
-//     // circle( drawing, centers[i], (int)radius[i], color, 2 );
-//   }
-// }
-
