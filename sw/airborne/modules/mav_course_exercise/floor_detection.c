@@ -48,6 +48,7 @@ struct YUV_color floor_simu_max = {0, 0, 0};
 //TODO: Define green floor color range in YUV for real flight, use the cyberzoo_poles_panels_mats - Daniel
 struct YUV_color floor_real_min = {0, 0, 0};
 struct YUV_color floor_real_max = {0, 0, 0};
+// let's try (47,10,70) / (150,133,133)
 
 struct YUV_color floor_min;
 struct YUV_color floor_max;
@@ -95,9 +96,11 @@ int c_bound_int(int num, int min, int max) {
 /// <param name="certainty"> The number of black pixels in a column of the bottom_count band, that makes that direction unsafe. </param>
 /// <returns> Array with indexes representing the column index, and values: 1 is safe, 2 is obstacle, 0 is outside of frame </returns>
 //int* c_ground_obstacle_detect(struct image_t *input, int safe_vector[], int invert_color=0, int bottom_count=10, int certainty=1) {
-int* c_ground_obstacle_detect(struct image_t *input, int safe_vector[], int invert_color, int bottom_count0, int certainty, uint8_t y_m, uint8_t y_M, uint8_t u_m, uint8_t u_M, uint8_t v_m, uint8_t v_M) {
+//int c_ground_obstacle_detect(struct image_t *input, int safe_vector[], int invert_color, int bottom_count0, int certainty, uint8_t y_m, uint8_t y_M, uint8_t u_m, uint8_t u_M, uint8_t v_m, uint8_t v_M) {
+void c_ground_obstacle_detect(struct image_t *input, int invert_color, int bottom_count0, int certainty, uint8_t y_m, uint8_t y_M, uint8_t u_m, uint8_t u_M, uint8_t v_m, uint8_t v_M) {
     // (0, 0) is top left corner
     int threat, obstacle_color, safe_color;
+    int safe_vector[260];
 
     uint8_t y_obstacle = 255, u_obstacle = 0, v_obstacle = 0;       //white
     uint8_t y_safe = 0, u_safe = 0, v_safe = 0;                     //black
@@ -110,6 +113,7 @@ int* c_ground_obstacle_detect(struct image_t *input, int safe_vector[], int inve
 //        uint8_t y_safe = 0, u_safe = 0, v_safe = 0;                     //black
 //    }
 
+//    printf("%d\n", input->w);
 
     // Go trough all the pixels, starting from bottom left
     uint8_t *zero = (uint8_t *)input->buf;
@@ -119,34 +123,43 @@ int* c_ground_obstacle_detect(struct image_t *input, int safe_vector[], int inve
         uint8_t *column = zero + i + (input->h - 1)*input->w;
 
         threat = 0;
-        safe_vector[i] == 0;
-        for (uint8_t j = 0; j < input->h; j++) {
-            // Go up one row in this column
-            uint8_t *pixel = column - j*input->w;
-
-            if (
-                    (pixel[1] >= y_m)
-                    && (pixel[1] <= y_M)
-                    && (pixel[0] >= u_m)
-                    && (pixel[0] <= u_M)
-                    && (pixel[2] >= v_m)
-                    && (pixel[2] <= v_M)
-                    )  {
-                threat ++;
-            } else{
-                threat --;
-            }
-
-            threat = c_bound_int(threat, 0, certainty);
-
-            if (threat == certainty && safe_vector[i] == 0){
-                safe_vector[i] = input->h - j - certainty;
-            } else if (threat == 0) {
-                safe_vector[i] == 0;
-            }
-        }
+        safe_vector[i] = 0;
+        /// I commented out the inner loop because
+        /// This inner for loop has a memory problem.
+        /// looks like *pixel is doing something wrong.
+        /// TODO: Can you try to fix it?
+        /// FYI, you can use printf for debugging just like I did in line #115.
+        /// If you don't get any printf msg on your paparazzi center,
+        /// then it is probably a segfault(usually memory problem).
+//        for (uint8_t j = 0; j < input->h; j++) {
+//            // Go up one row in this column
+//            uint8_t *pixel = column - j*input->w;
+//
+//            if (
+//                    (pixel[1] >= y_m)
+//                    && (pixel[1] <= y_M)
+//                    && (pixel[0] >= u_m)
+//                    && (pixel[0] <= u_M)
+//                    && (pixel[2] >= v_m)
+//                    && (pixel[2] <= v_M)
+//                    )  {
+//                threat ++;
+//            } else{
+//                threat --;
+//            }
+//
+//            threat = c_bound_int(threat, 0, certainty);
+//
+//            if (threat == certainty && safe_vector[i] == 0){
+//                safe_vector[i] = input->h - j - certainty;
+//            } else if (threat == 0) {
+//                safe_vector[i] = 0;
+//            }
+//        }
     }
-    return safe_vector;
+//    printf("6\n");
+
+//    return safe_vector;
 }
 
 /// <summary>
@@ -185,11 +198,11 @@ int *binary_decoder(uint8_t code){
 }
 
 
-void floor_detect_cb(struct image_t *img){
+static struct image_t *floor_detect_cb(struct image_t *img){
     //Create a copy of the input img, so we don't overwrite it
-    struct image_t floor_img;
-    image_copy(img, &floor_img);
-
+//    struct image_t *floor_img;
+//    image_copy(img, floor_img);
+/// no need to copy. we don't MODIFY the img
 
     //TODO: Use the normalised box filter function from OpenCV: blur(Mat src, Mat out, Size(krnl, krnl)
     //      ...with kernel size of 5.
@@ -204,7 +217,7 @@ void floor_detect_cb(struct image_t *img){
 
 
     //TODO: Make sure the array length is equal to the width of the front camera image
-    int safe_array[260] = { };
+//    int safe_array[260];
 
     //TODO: Measure how many pixels from the bottom the bottom of the obstacle is,
     //      ...if it is in the safe distance away from the drone, hovering at the standard altitude.
@@ -212,10 +225,10 @@ void floor_detect_cb(struct image_t *img){
     //TODO:Alternatively measure how far the obstacle must be, so that it's bottom starts clipping in the image,
     //      ...and maybe take that distance as the safe distance in the periodic?
 
-    int *safe_array_pt = c_ground_obstacle_detect(&floor_img, safe_array, 0, 50, 5,
-                                                  floor_min.y, floor_max.y,
-                                                  floor_min.u, floor_max.u,
-                                                  floor_min.v, floor_max.v);
+//    printf("start\n");
+//    int *safe_array_pt = c_ground_obstacle_detect(&floor_img, safe_array, 0, 50, 5,
+    c_ground_obstacle_detect(img, 0, 50, 5, floor_min.y, floor_max.y, floor_min.u, floor_max.u, floor_min.v, floor_max.v);
+//    printf("end\n");
 
     //TODO: Divide the safe_array - Daniel
     //Take the closest obstacle in the given sector
@@ -228,12 +241,14 @@ void floor_detect_cb(struct image_t *img){
         for (int j = range_low; j < range_high; j++){
             //Low value means the obstacle is close to the drone
             //(since the value is the height of the obstacle in the image)
-            if (safe_array[j] > 0 && obstacle_sector_array[i] > safe_array[j]){
-                obstacle_sector_array[i] = 1;
-                break;
-            }
+            /// commented out for debugging TODO: uncomment lines below
+//            if (safe_array[j] > 0 && obstacle_sector_array[i] > safe_array[j]){
+//                obstacle_sector_array[i] = 1;
+//                break;
+//            }
         }
     }
+//    printf("end222\n");
 
     // TODO: what variables do you want to publish via Abi? -S.
     //      What about this: Assume we divide the entire width of the frame into 5 sectors: far left, near left, center, near right, far right.
@@ -241,11 +256,13 @@ void floor_detect_cb(struct image_t *img){
     //      Now what we have is essentially a binary number, i.e: obstacle in the far and near left -> 11000.
     //      We can convert this binary to decimal, and send that decimal via Abi.
     //      Whatever is subscribed to it will need to decode it back to binary and then to an array.
-    uint8_t test_val = binary_encoder(obstacle_sector_array);
+//    uint8_t test_val = binary_encoder(obstacle_sector_array);
+    uint8_t test_val = 1;   /// just a placeholder
     AbiSendMsgFLOOR_DETECTION(ABI_FLOOR_DETECTION_ID, test_val);    // placeholder; send the result via Abi.
     //TODO: How can I log/print this?
     /// Actually, with c pprz module, you can just use printf then it will print out on the pprz center
 
+    return img;
 }
 
 void floor_detection_init(void)
@@ -292,7 +309,7 @@ void floor_detection_periodic(void)
 
 
 
-    return;
+//    return;
 }
 
 
