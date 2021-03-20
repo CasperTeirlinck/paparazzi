@@ -5,7 +5,7 @@
  */
 /**
  * @file "modules/mav_course_edges/mav_course_edges.c"
- * @author Group 3
+ * @author Group 3 MAV course 2021
  */
 
 #include "modules/mav_course_edges/mav_course_edges.h"

@@ -1,6 +1,6 @@
 /**
  * @file "modules/mav_course_edges/opencv_functions.h"
- * @author C. Teirlinck
+ * @author Group 3 MAV course 2021
  */
 
 #ifndef OPENCV_FUNCTIONS_H
