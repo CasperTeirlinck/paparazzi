@@ -50,8 +50,8 @@ $ g++ test.cpp opencv_functions.cpp -o test \
 using namespace std;
 using namespace cv;
 
-#define PAPARAZZI_SRC "~/paparazzi"
-#define DATA_DIR PAPARAZZI_SRC "/prototyping/AE4317_2019_datasets/sim_poles_panels_mats/20190121-161931/"
+// #define PAPARAZZI_SRC "$HOME/paparazzi"
+#define DATA_DIR "/paparazzi/prototyping/AE4317_2019_datasets/sim_poles_panels_mats/20190121-161931/"
 #define DATA DATA_DIR "*.jpg"
 
 // Save directory
@@ -64,7 +64,9 @@ int main()
 
   // Define frame reading iterator
   vector<String> fn;
-  glob(DATA, fn, false);
+  string data_dir = (string) getenv("HOME") + DATA_DIR;
+  string data = (string) getenv("HOME") + DATA;
+  glob(data, fn, false);
 
   // Loop trough frames
   for (size_t i=0; i<fn.size(); i++)
@@ -75,11 +77,11 @@ int main()
     frame = get_obstacles_edgebox(frame, frame.size[0], frame.size[1]);
 
     string filename = fn[i];
-    filename.replace(filename.find(DATA_DIR), sizeof(DATA_DIR)-1, "");
+    filename.replace(filename.find(data_dir), data_dir.size()-1, "");
 
-    imwrite("~/paparazzi/prototyping/paparazzi_capture/"+filename, frame);
+    string filepath = (string) getenv("HOME") + "/paparazzi/prototyping/paparazzi_capture";
+    imwrite(filepath+filename, frame);
   }
-
 
   return 0;
 }

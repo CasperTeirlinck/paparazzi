@@ -56,13 +56,9 @@ Mat get_obstacles_edgebox(Mat img, int w, int h) {
   cvtColor(image, image_gray, CV_BGR2GRAY);
   #endif
 
-  // Convert image to the gray scale image
-  // then get rid of the noise by blurring
-  // Mat image_gray;
-  // cvtColor(image, image_gray, CV_YUV2GRAY_Y422);
+  // Get rid of the noise by blurring
   // blur(image_gray, image_gray, Size(3,3)); // Why example with size (5,5)??  
-  GaussianBlur(image_gray, image_gray, Size(3, 3), 0);
-  // medianBlur(image_gray, image_gray, Size(5));
+  GaussianBlur(image_gray, image_gray, Size(5, 5), 0);
 
   /*
   // using canny to detect the edges of the images
