@@ -125,6 +125,7 @@ void c_ground_obstacle_detect(struct image_t *input, int bottom_count, int certa
 
             if (threat == certainty && safe_vector[i] == 0) {
                 safe_vector[i] = input->w - j - certainty;
+                //printf("threat detected at %d\n", i);
             } else if (threat == 0) {
                 safe_vector[i] = 0;
             }
@@ -145,9 +146,11 @@ void c_ground_obstacle_detect(struct image_t *input, int bottom_count, int certa
         for (int j = range_low; j < range_high; j++) {
             //Low value means the obstacle is close to the drone
             //(since the value is the height of the obstacle in the image)
-            if (safe_vector[j] > 0 && obstacle_sector_array[i] > safe_vector[j]) {
-                obstacle_sector_array[i] = 1;
-//                obstacle_sector_array[i] = safe_vector[j];
+            if (safe_vector[j] > 0) {
+                if (obstacle_sector_array[i] == 0 || obstacle_sector_array[i] > safe_vector[j]) {
+                    obstacle_sector_array[i] = 1;
+//                  obstacle_sector_array[i] = safe_vector[j];
+                }
                 break;
             }
         }
@@ -210,7 +213,7 @@ static struct image_t *floor_detect_cb(struct image_t *img){
     //      ...and maybe take that distance as the safe distance in the periodic?
 
 
-    c_ground_obstacle_detect_sideways(img, 50, 5, floor_min.y, floor_max.y, floor_min.u, floor_max.u, floor_min.v, floor_max.v);
+    c_ground_obstacle_detect(img, 50, 5, floor_min.y, floor_max.y, floor_min.u, floor_max.u, floor_min.v, floor_max.v);
 
 
     // TODO: what variables do you want to publish via Abi? -S.
@@ -231,13 +234,15 @@ void floor_detection_init(void)
     //TODO: Undistort the camera image if needed, see computer_vision/undistort_image.c maybe
 
 
-    if (FLOOR_DETECT_TYPE == SIMU){
-        floor_min = floor_simu_min;
-        floor_max = floor_simu_max;
-    } else if(FLOOR_DETECT_TYPE == REAL){
-        floor_min = floor_real_min;
-        floor_max = floor_real_max;
-    }
+//    if (FLOOR_DETECT_TYPE == SIMU){
+//        floor_min = floor_simu_min;
+//        floor_max = floor_simu_max;
+//    } else if(FLOOR_DETECT_TYPE == REAL){
+//        floor_min = floor_real_min;
+//        floor_max = floor_real_max;
+//    }
+    floor_min = floor_simu_min;
+    floor_max = floor_simu_max;
 
     cv_add_to_device(&FLOOR_DETECT_CAMERA, floor_detect_cb, FLOOR_DETECT_FPS);
 
