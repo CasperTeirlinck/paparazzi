@@ -58,6 +58,14 @@ enum color_set {
     REAL
 };
 
+/// I leave this for navigation guys! TODO: remove this later!
+static abi_event floor_detection_ev;
+static void floor_detection_test_cb(uint8_t __attribute__((unused)) sender_id,
+                               int v1, int v2, int v3, int v4, int v5, int v6, int v7, int v8, int v9, int v10)
+{
+    /// I checked it working well!
+//    printf("%d, %d, %d, %d, %d, %d, %d, %d, %d, %d\n", v1,v2,v3,v4,v5,v6,v7,v8,v9,v10);
+}
 
 
 
@@ -114,11 +122,21 @@ void c_ground_obstacle_detect(struct image_t *input, int bottom_count, int certa
                     && (pixel[2] >= v_m)
                     && (pixel[2] <= v_M)
                     ) {
-                if (j >= bottom_count) {
+//                if (j >= bottom_count) {
+//                    threat++;
+//                }
+                threat--;
+            /// I swapped two, because I think
+            /// if the pixel is GREEN, means safe, so it should decrease the threat,
+            /// and if it is NOT GREEN, it is an obstacle, so increase threat.
+            /// Also I changed the j<bottom_count, because
+            /// we care if an obstacle is *within* some range on the floor.
+            /// Correct me if I got wrong! :)
+            } else {
+//                threat--;
+                if (j < bottom_count) {
                     threat++;
                 }
-            } else {
-                threat--;
             }
 
             threat = c_bound_int(threat, 0, certainty);
@@ -159,6 +177,12 @@ void c_ground_obstacle_detect(struct image_t *input, int bottom_count, int certa
     printf("\n");
 
     ///TODO: ABI messaging goes here: values of obstacle_sector_array, but
+
+    //publish the result via Abi. Passing 10 int is a stupid way but safe haha
+    AbiSendMsgFLOOR_DETECTION(ABI_FLOOR_DETECTION_ID, obstacle_sector_array[0], obstacle_sector_array[1],
+                              obstacle_sector_array[2], obstacle_sector_array[3], obstacle_sector_array[4],
+                              obstacle_sector_array[5], obstacle_sector_array[6], obstacle_sector_array[7],
+                              obstacle_sector_array[8], obstacle_sector_array[9]);
 }
 
 /// <summary>
@@ -223,8 +247,7 @@ static struct image_t *floor_detect_cb(struct image_t *img){
     //      We can convert this binary to decimal, and send that decimal via Abi.
     //      Whatever is subscribed to it will need to decode it back to binary and then to an array.
 //    uint8_t test_val = binary_encoder(obstacle_sector_array);
-    uint8_t test_val = 1;   /// just a placeholder
-    AbiSendMsgFLOOR_DETECTION(ABI_FLOOR_DETECTION_ID, test_val);    // placeholder; send the result via Abi.
+//    AbiSendMsgFLOOR_DETECTION(ABI_FLOOR_DETECTION_ID, test_val);    // placeholder; send the result via Abi.
 
     return img;
 }
@@ -244,7 +267,11 @@ void floor_detection_init(void)
     floor_min = floor_simu_min;
     floor_max = floor_simu_max;
 
+    // Subscribe the camera image
     cv_add_to_device(&FLOOR_DETECT_CAMERA, floor_detect_cb, FLOOR_DETECT_FPS);
+
+    /// I leave this line for navigation guys! TODO: remove this later!
+    AbiBindMsgFLOOR_DETECTION(ABI_FLOOR_DETECTION_ID, &floor_detection_ev, floor_detection_test_cb);
 
 }
 

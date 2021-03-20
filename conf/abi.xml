@@ -205,7 +205,17 @@
     </message>
 
     <message name="FLOOR_DETECTION" id="29">
-      <field name="detected" type="uint8_t">testval</field>
+<!--      <field name="detected" type="uint8_t">testval</field>-->
+      <field name="obstacle_dist1" type="int">very left</field>
+      <field name="obstacle_dist2" type="int">2</field>
+      <field name="obstacle_dist3" type="int">3</field>
+      <field name="obstacle_dist4" type="int">4</field>
+      <field name="obstacle_dist5" type="int">center left</field>
+      <field name="obstacle_dist6" type="int">center right</field>
+      <field name="obstacle_dist7" type="int">7</field>
+      <field name="obstacle_dist8" type="int">8</field>
+      <field name="obstacle_dist9" type="int">9</field>
+      <field name="obstacle_dist10" type="int">very right</field>
     </message>
 
   </msg_class>
