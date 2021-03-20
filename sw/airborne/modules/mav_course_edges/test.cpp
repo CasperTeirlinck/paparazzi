@@ -10,11 +10,11 @@
 
 /* 
 To compile use:
-$ g++ test.cpp -o test \
-  -I /home/casper/paparazzi/sw/ext/opencv_bebop/install_pc/include \
-  -L /home/casper/paparazzi/sw/ext/opencv_bebop/install_pc/lib \
+$ g++ test.cpp opencv_functions.cpp -o test \
+  -I ~/paparazzi/sw/ext/opencv_bebop/install_pc/include \
+  -L ~/paparazzi/sw/ext/opencv_bebop/install_pc/lib \
   -lopencv_world \
-  -L /home/casper/paparazzi/sw/ext/opencv_bebop/install_pc/share/OpenCV/3rdparty/lib \
+  -L ~/paparazzi/sw/ext/opencv_bebop/install_pc/share/OpenCV/3rdparty/lib \
   -llibprotobuf \
   -lquirc \
   -L /usr/lib/x86_64-linux-gnu \
@@ -50,7 +50,7 @@ $ g++ test.cpp -o test \
 using namespace std;
 using namespace cv;
 
-#define PAPARAZZI_SRC "/home/casper/paparazzi"
+#define PAPARAZZI_SRC "~/paparazzi"
 #define DATA_DIR PAPARAZZI_SRC "/prototyping/AE4317_2019_datasets/sim_poles_panels_mats/20190121-161931/"
 #define DATA DATA_DIR "*.jpg"
 
@@ -60,7 +60,7 @@ static char save_dir[256];
 int main()
 {
   // Set frame output save path
-  // sprintf(save_dir, "/home/casper/paparazzi/prototyping/paparazzi_capture");
+  // sprintf(save_dir, "~/paparazzi/prototyping/paparazzi_capture");
 
   // Define frame reading iterator
   vector<String> fn;
@@ -77,9 +77,7 @@ int main()
     string filename = fn[i];
     filename.replace(filename.find(DATA_DIR), sizeof(DATA_DIR)-1, "");
 
-    // cout << filename + "\n";
-
-    imwrite("/home/casper/paparazzi/prototyping/paparazzi_capture/"+filename, frame);
+    imwrite("~/paparazzi/prototyping/paparazzi_capture/"+filename, frame);
   }
 
 

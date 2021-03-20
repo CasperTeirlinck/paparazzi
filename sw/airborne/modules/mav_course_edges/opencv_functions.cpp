@@ -62,6 +62,7 @@ Mat get_obstacles_edgebox(Mat img, int w, int h) {
   // cvtColor(image, image_gray, CV_YUV2GRAY_Y422);
   // blur(image_gray, image_gray, Size(3,3)); // Why example with size (5,5)??  
   GaussianBlur(image_gray, image_gray, Size(3, 3), 0);
+  // medianBlur(image_gray, image_gray, Size(5));
 
   /*
   // using canny to detect the edges of the images
