@@ -6,11 +6,24 @@
 #ifndef OPENCV_FUNCTIONS_H
 #define OPENCV_FUNCTIONS_H
 
+// When using thet dataset images instead of the camera feed
+#define USEDATASET 1
+
+#if USEDATASET
+#include <opencv2/core/core.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
+using namespace cv;
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-int opencv_example(char *img, int width, int height);
+#if !USEDATASET
+void get_obstacles_edgebox(char *img, int width, int height);
+#else
+Mat get_obstacles_edgebox(Mat img, int width, int height);
+#endif
 
 #ifdef __cplusplus
 }

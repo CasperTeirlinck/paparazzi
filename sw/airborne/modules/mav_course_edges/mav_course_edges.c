@@ -67,11 +67,7 @@ void mav_course_edges_init(void)
 struct image_t *camera_cb(struct image_t *img)
 {
 
-  // (char *) img->buf
-
-  opencv_example((char *) img->buf, img->w, img->h);
-
-  PRINT("height: %s \n", img->type);
+  get_obstacles_edgebox((char *) img->buf, img->w, img->h);
 
   return img;
 }
