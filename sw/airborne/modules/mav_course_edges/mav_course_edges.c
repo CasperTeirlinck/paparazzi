@@ -79,6 +79,11 @@ float moveDistance = 2;                 // waypoint displacement [m]
 float heading_increment = 5.f;          // heading angle increment [deg]
 float maxDistance = 2.25;               // max waypoint displacement [m]
 
+#ifndef MT9F002_OUTPUT_HEIGHT
+#define MT9F002_OUTPUT_HEIGHT 520
+#endif
+int obstacles[MT9F002_OUTPUT_HEIGHT];
+
 static char save_dir[256];
 
 /*
