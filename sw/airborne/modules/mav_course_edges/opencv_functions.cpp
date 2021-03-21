@@ -12,14 +12,10 @@
 
 #include <opencv2/core/core.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
-// #include "opencv_image_functions.h"
-#include "/home/casper/paparazzi/sw/airborne/modules/computer_vision/opencv_image_functions.h"
-// #include "/home/kjell/paparazzi/sw/airborne/modules/computer_vision/opencv_image_functions.h"
+#include "opencv_image_functions.h"
 
 using namespace std;
 using namespace cv;
-
-// void edge_box(int, void*);
 
 // When using thet dataset images instead of the camera feed
 #define USEDATASET 1
@@ -33,13 +29,13 @@ using namespace cv;
 
 // Define functions
 #if !USEDATASET
-void get_obstacles_edgebox(char *img, int w, int h);
+void get_obstacles_edgebox(char *img, int w, int h, int show_debug);
 #else
 Mat get_obstacles_edgebox(Mat img, int w, int h);
 #endif
 
 #if !USEDATASET
-void get_obstacles_edgebox(char *img, int w, int h) {
+void get_obstacles_edgebox(char *img, int w, int h, int show_debug) {
 #else
 Mat get_obstacles_edgebox(Mat img, int w, int h) {
 #endif
@@ -123,7 +119,6 @@ Mat get_obstacles_edgebox(Mat img, int w, int h) {
   }
   
   //  Prepare Draw output
-  Mat drawing = Mat::zeros(image_canny.size(), CV_8UC3);
   for(size_t i = 0; i< boundRect_obst.size(); i++)
   {
     // Below this the obstacles will be put into an array
@@ -166,9 +161,12 @@ Mat get_obstacles_edgebox(Mat img, int w, int h) {
 
   cout << "   " << endl; 
   cout << "   " << endl; 
-  // Convert image back to YUV422
+
   #if !USEDATASET
-  colorbgr_opencv_to_yuv422(image, img, w, h);
+  // Convert image back to YUV422 and replace the frame buffer when debugging
+  if (show_debug) {
+    colorbgr_opencv_to_yuv422(image, img, w, h);
+  }
   #else
   return image;
   #endif

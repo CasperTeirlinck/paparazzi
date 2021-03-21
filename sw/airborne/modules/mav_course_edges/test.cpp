@@ -12,6 +12,7 @@
 To compile use:
 $ g++ test.cpp opencv_functions.cpp -o test \
   -I ~/paparazzi/sw/ext/opencv_bebop/install_pc/include \
+  -I ~/paparazzi/sw/airborne/modules/computer_vision \
   -L ~/paparazzi/sw/ext/opencv_bebop/install_pc/lib \
   -lopencv_world \
   -L ~/paparazzi/sw/ext/opencv_bebop/install_pc/share/OpenCV/3rdparty/lib \
@@ -51,8 +52,8 @@ using namespace std;
 using namespace cv;
 
 // #define DATA_DIR "/paparazzi/prototyping/AE4317_2019_datasets/sim_poles_panels_mats/20190121-161931/"
-#define DATA_DIR "/paparazzi/prototyping/AE4317_2019_datasets/test_set_single/"
-// #define DATA_DIR "/paparazzi/prototyping/AE4317_2019_datasets/cyberzoo_poles_panels_mats/20190121-142935/"
+// #define DATA_DIR "/paparazzi/prototyping/AE4317_2019_datasets/test_set_single/"
+#define DATA_DIR "/paparazzi/prototyping/AE4317_2019_datasets/cyberzoo_poles_panels_mats/20190121-142935/"
 #define DATA DATA_DIR "*.jpg"
 
 // Define settings

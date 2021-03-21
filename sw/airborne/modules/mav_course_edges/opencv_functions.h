@@ -20,7 +20,7 @@ extern "C" {
 #endif
 
 #if !USEDATASET
-void get_obstacles_edgebox(char *img, int w, int h);
+void get_obstacles_edgebox(char *img, int w, int h, int show_debug);
 #else
 Mat get_obstacles_edgebox(Mat img, int w, int h);
 #endif

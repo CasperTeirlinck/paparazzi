@@ -79,12 +79,17 @@ float moveDistance = 2;                 // waypoint displacement [m]
 float heading_increment = 5.f;          // heading angle increment [deg]
 float maxDistance = 2.25;               // max waypoint displacement [m]
 
+#ifndef EB_DEBUG
+#define EB_DEBUG 0
+#endif
+int debug = EB_DEBUG; // toggle writing frames to disk
+
+static char save_dir[256];
+
 #ifndef MT9F002_OUTPUT_HEIGHT
 #define MT9F002_OUTPUT_HEIGHT 520
 #endif
 int obstacles[MT9F002_OUTPUT_HEIGHT];
-
-static char save_dir[256];
 
 /*
  * Initialisation function
@@ -92,13 +97,16 @@ static char save_dir[256];
 void mav_course_edges_init(void)
 {
   // Set frame output save path
-  sprintf(save_dir, "/home/casper/paparazzi/prototyping/paparazzi_capture");
+  if (debug) {
+    sprintf(save_dir, "/home/casper/paparazzi/prototyping/paparazzi_capture");
+  }
 
   // Attach callback function to the front camera for obstacle avoidance
   cv_add_to_device(&front_camera, camera_cb, 0);
   // Attach callback function to the front camera for debugging
-  cv_add_to_device(&front_camera, video_capture_cb, 2);
-
+  if (debug) {
+    cv_add_to_device(&front_camera, video_capture_cb, 2);
+  }
 }
 
 /*
@@ -108,7 +116,7 @@ void mav_course_edges_init(void)
  */
 struct image_t *camera_cb(struct image_t *img)
 {
-  get_obstacles_edgebox((char *) img->buf, img->w, img->h);
+  get_obstacles_edgebox((char *) img->buf, img->w, img->h, debug);
 
   return img;
 }
@@ -116,7 +124,7 @@ struct image_t *camera_cb(struct image_t *img)
 /*
  * Callback from the camera for video capture
  * @param img - input image to process
- * @return NULL
+ * @return img
  */
 struct image_t *video_capture_cb(struct image_t *img)
 {
@@ -124,7 +132,6 @@ struct image_t *video_capture_cb(struct image_t *img)
 
   return NULL;
 }
-
 
 /*
  * Function that checks it is safe to move forwards, and then moves a waypoint forward or changes the heading
@@ -135,8 +142,6 @@ void mav_course_edges_periodic(void)
   if(!autopilot_in_flight()){
     return;
   }
-
-  // PRINT("divergence = %.2f state: %d \n", div_size, navigation_state);
 
   switch (navigation_state){
     case SAFE:
