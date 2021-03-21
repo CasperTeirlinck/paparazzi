@@ -82,9 +82,7 @@ Mat get_obstacles_edgebox(Mat img, int w, int h) {
 
   // using canny to detect the edges of the images
   Mat image_canny;
-  int edgeThresh = 100;
-  // Canny(image_blur, image_canny, edgeThresh * 2, edgeThresh);   // Canny for real pictures
-  Canny(image_blur, image_canny, eb_canny_thresh_1, 250 );          // Canny for simulation pictures
+  Canny(image_blur, image_canny, eb_canny_thresh_1, eb_canny_thresh_2 );
 
   // Finding contours
   vector<vector<Point>> contours;
