@@ -12,7 +12,12 @@
 #define MAV_COURSE_EDGES_H
 
 // settings
-// extern float oa_color_count_frac;
+extern float eb_hor_thresh;
+extern int eb_blur_size;
+extern int eb_canny_thresh_1;
+extern int eb_canny_thresh_2;
+extern float eb_size_thresh;
+extern int eb_diff_thresh;
 
 // functions
 extern void mav_course_edges_init(void);

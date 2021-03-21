@@ -39,6 +39,34 @@ static struct image_t *camera_cb(struct image_t *img);
 static struct image_t *video_capture_cb(struct image_t *img);
 static void video_capture_save(struct image_t *img);
 
+// Define settings
+#ifndef EB_HOR_THRESH
+#define EB_HOR_THRESH 0.6
+#endif
+#ifndef EB_BLUR_SIZE
+#define EB_BLUR_SIZE 41
+#endif
+#ifndef EB_CANNY_THRESH_1
+#define EB_CANNY_THRESH_1 200
+#endif
+#ifndef EB_CANNY_THRESH_2
+#define EB_CANNY_THRESH_2 250
+#endif
+#ifndef EB_SIZE_THRESH
+#define EB_SIZE_THRESH 75
+#endif
+#ifndef EB_DIFF_THRESH
+#define EB_DIFF_THRESH 60
+#endif
+
+float eb_hor_thresh = EB_HOR_THRESH;
+int eb_blur_size = EB_BLUR_SIZE;
+int eb_canny_thresh_1 = EB_CANNY_THRESH_1;
+int eb_canny_thresh_2 = EB_CANNY_THRESH_2;
+float eb_size_thresh = EB_SIZE_THRESH;
+int eb_diff_thresh = EB_DIFF_THRESH;
+
+// Define and initialise global variables
 enum navigation_state_t {
   SAFE,
   OBSTACLE_FOUND,
@@ -46,18 +74,12 @@ enum navigation_state_t {
   OUT_OF_BOUNDS
 };
 
-// Define and initialise global variables
 enum navigation_state_t navigation_state = SEARCH_FOR_SAFE_HEADING;
 float moveDistance = 2;                 // waypoint displacement [m]
 float heading_increment = 5.f;          // heading angle increment [deg]
 float maxDistance = 2.25;               // max waypoint displacement [m]
 
 static char save_dir[256];
-
-/*
- * ABI messaging events (http://wiki.paparazziuav.org/wiki/ABI)
- */
-
 
 /*
  * Initialisation function
@@ -69,6 +91,7 @@ void mav_course_edges_init(void)
 
   // Attach callback function to the front camera for obstacle avoidance
   cv_add_to_device(&front_camera, camera_cb, 0);
+  // Attach callback function to the front camera for debugging
   cv_add_to_device(&front_camera, video_capture_cb, 2);
 
 }
