@@ -134,9 +134,9 @@ Mat get_obstacles_edgebox(Mat img, int w, int h) {
     // drawContours(drawing, contours, (int)i, color);
     // This draws the rectangle
     rectangle(image, boundRect_obst[i].tl(), boundRect_obst[i].br(), color, 2);
-    Point point1 = Point(0.4*h, 0);
-    Point point2 = Point(0.4*h, w);
-    line(image, point1, point2, Scalar(0,0,255), 1 );
+    Point point1 = Point(0.4*w, 0);
+    Point point2 = Point(0.4*w, h);
+    line(image, point1, point2, Scalar(0,0,255), 1);
   }
 
   // Convert image back to YUV422

@@ -77,7 +77,7 @@ int main()
     Mat frame = imread(fn[i]);
     if (frame.empty()) continue; // skip loop if not succesfull
 
-    frame = get_obstacles_edgebox(frame, frame.size[0], frame.size[1]);
+    frame = get_obstacles_edgebox(frame, frame.size[1], frame.size[0]); // note: frame is rotated 90deg!
 
     string filename = fn[i];
     filename.replace(filename.find(data_dir), data_dir.size()-1, "");
