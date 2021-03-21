@@ -58,6 +58,9 @@ static void video_capture_save(struct image_t *img);
 #ifndef EB_DIFF_THRESH
 #define EB_DIFF_THRESH 60
 #endif
+#ifndef EB_SHOW_DEBUG
+#define EB_SHOW_DEBUG 0
+#endif
 
 float eb_hor_thresh = EB_HOR_THRESH;
 int eb_blur_size = EB_BLUR_SIZE;
@@ -65,6 +68,7 @@ int eb_canny_thresh_1 = EB_CANNY_THRESH_1;
 int eb_canny_thresh_2 = EB_CANNY_THRESH_2;
 float eb_size_thresh = EB_SIZE_THRESH;
 int eb_diff_thresh = EB_DIFF_THRESH;
+int show_debug = EB_SHOW_DEBUG; // toggle writing frames to memory and disk
 
 // Define and initialise global variables
 enum navigation_state_t {
@@ -79,11 +83,6 @@ float moveDistance = 2;                 // waypoint displacement [m]
 float heading_increment = 5.f;          // heading angle increment [deg]
 float maxDistance = 2.25;               // max waypoint displacement [m]
 
-#ifndef EB_DEBUG
-#define EB_DEBUG 0
-#endif
-int debug = EB_DEBUG; // toggle writing frames to disk
-
 static char save_dir[256];
 
 #ifndef MT9F002_OUTPUT_HEIGHT
@@ -97,16 +96,12 @@ int obstacles[MT9F002_OUTPUT_HEIGHT];
 void mav_course_edges_init(void)
 {
   // Set frame output save path
-  if (debug) {
-    sprintf(save_dir, "/home/casper/paparazzi/prototyping/paparazzi_capture");
-  }
+  sprintf(save_dir, "/home/casper/paparazzi/prototyping/paparazzi_capture");
 
   // Attach callback function to the front camera for obstacle avoidance
   cv_add_to_device(&front_camera, camera_cb, 0);
   // Attach callback function to the front camera for debugging
-  if (debug) {
-    cv_add_to_device(&front_camera, video_capture_cb, 2);
-  }
+  cv_add_to_device(&front_camera, video_capture_cb, 2);
 }
 
 /*
@@ -116,7 +111,7 @@ void mav_course_edges_init(void)
  */
 struct image_t *camera_cb(struct image_t *img)
 {
-  get_obstacles_edgebox((char *) img->buf, img->w, img->h, debug);
+  get_obstacles_edgebox((char *) img->buf, img->w, img->h, show_debug);
 
   return img;
 }
@@ -128,7 +123,9 @@ struct image_t *camera_cb(struct image_t *img)
  */
 struct image_t *video_capture_cb(struct image_t *img)
 {
-  video_capture_save(img);
+  if (show_debug) {
+    video_capture_save(img);
+  }
 
   return NULL;
 }

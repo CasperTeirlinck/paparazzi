@@ -18,7 +18,7 @@ using namespace std;
 using namespace cv;
 
 // When using thet dataset images instead of the camera feed
-#define USEDATASET 1
+#define USEDATASET 0
 
 #if !USEDATASET
 // include for acceccing the module settings
@@ -154,13 +154,13 @@ Mat get_obstacles_edgebox(Mat img, int w, int h) {
     // line(image, point3, point4, Scalar(255,0,0), 2);
   }
   
-  for (int k =0; k < 520; k++)
-  {
-    cout << obstacle[k]; 
-  }
+  // for (int k =0; k < 520; k++)
+  // {
+  //   cout << obstacle[k]; 
+  // }
 
-  cout << "   " << endl; 
-  cout << "   " << endl; 
+  // cout << "   " << endl; 
+  // cout << "   " << endl; 
 
   #if !USEDATASET
   // Convert image back to YUV422 and replace the frame buffer when debugging

@@ -58,7 +58,7 @@
     </module>
 
     <module name="mav_course_edges">
-      <define name="EB_DEBUG" value="1"/>
+      <define name="EB_SHOW_DEBUG" value="0"/>
     </module>
     
     <module name="video_rtp_stream">

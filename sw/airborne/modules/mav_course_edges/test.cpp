@@ -1,5 +1,5 @@
 /**
- * This file is to test the opencv implementations on the given dataset
+ * This file is to test the opencv implementations on the given dataset without running paparazzi
  * This file is mean to be compiled stabdalone, but still using the bepop opencv build
  * ! Dont forget to set USEDATASET to 1 in opencv_function.cpp and opencv_function.h !
  */
@@ -9,7 +9,7 @@
  */
 
 /* 
-To compile use:
+To compile use in current directory:
 $ g++ test.cpp opencv_functions.cpp -o test \
   -I ~/paparazzi/sw/ext/opencv_bebop/install_pc/include \
   -I ~/paparazzi/sw/airborne/modules/computer_vision \

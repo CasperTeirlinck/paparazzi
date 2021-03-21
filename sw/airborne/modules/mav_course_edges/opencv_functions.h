@@ -7,7 +7,7 @@
 #define OPENCV_FUNCTIONS_H
 
 // When using thet dataset images instead of the camera feed
-#define USEDATASET 1
+#define USEDATASET 0
 
 #if USEDATASET
 #include <opencv2/core/core.hpp>
