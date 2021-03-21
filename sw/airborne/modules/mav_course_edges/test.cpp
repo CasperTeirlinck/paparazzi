@@ -45,15 +45,22 @@ $ g++ test.cpp opencv_functions.cpp -o test \
 #include <opencv2/highgui/highgui.hpp>
 
 #include "opencv_functions.h"
-// #include "lib/encoding/jpeg.h"
+#include "test.hpp"
 
 using namespace std;
 using namespace cv;
 
-// #define PAPARAZZI_SRC "$HOME/paparazzi"
 #define DATA_DIR "/paparazzi/prototyping/AE4317_2019_datasets/sim_poles_panels_mats/20190121-161931/"
 // #define DATA_DIR "/paparazzi/prototyping/AE4317_2019_datasets/cyberzoo_poles_panels_mats/20190121-142935/"
 #define DATA DATA_DIR "*.jpg"
+
+// Define settings
+float eb_hor_thresh = 0.6;
+int eb_blur_size = 41;
+int eb_canny_thresh_1 = 200;
+int eb_canny_thresh_2 = 250;
+float eb_size_thresh = 75;
+int eb_diff_thresh = 60;
 
 int main()
 {

@@ -13,8 +13,8 @@
 #include <opencv2/core/core.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 // #include "opencv_image_functions.h"
-// #include "/home/casper/paparazzi/sw/airborne/modules/computer_vision/opencv_image_functions.h"
-#include "/home/kjell/paparazzi/sw/airborne/modules/computer_vision/opencv_image_functions.h"
+#include "/home/casper/paparazzi/sw/airborne/modules/computer_vision/opencv_image_functions.h"
+// #include "/home/kjell/paparazzi/sw/airborne/modules/computer_vision/opencv_image_functions.h"
 
 using namespace std;
 using namespace cv;
@@ -23,6 +23,13 @@ using namespace cv;
 
 // When using thet dataset images instead of the camera feed
 #define USEDATASET 1
+
+#if !USEDATASET
+// include for acceccing the module settings
+#include "mav_course_edges.h"
+#else
+#include "test.hpp"
+#endif
 
 // Define functions
 #if !USEDATASET
@@ -77,7 +84,7 @@ Mat get_obstacles_edgebox(Mat img, int w, int h) {
   Mat image_canny;
   int edgeThresh = 100;
   // Canny(image_blur, image_canny, edgeThresh * 2, edgeThresh);   // Canny for real pictures
-  Canny(image_blur, image_canny, 200, 250 );          // Canny for simulation pictures
+  Canny(image_blur, image_canny, eb_canny_thresh_1, 250 );          // Canny for simulation pictures
 
   // Finding contours
   vector<vector<Point>> contours;
