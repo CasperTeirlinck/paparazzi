@@ -18,14 +18,15 @@
  * <http://www.gnu.org/licenses/>.
  */
 
+
 /** @file "modules/mav_course_exercise/floor_detection.c"
  * @author Daniel Toth <d.toth@student.tudelft.nl>
  * Obstacle detection based on floor colorfiltering.
  */
 
+
 #include "modules/mav_course_exercise/floor_detection.h"
 #include "modules/computer_vision/lib/vision/image.h"
-//#include "modules/mav_course_exercise/ground_obstacle_detect.h"
 #include "subsystems/abi.h"
 
 #ifndef FLOOR_DETECT_FPS
@@ -36,19 +37,17 @@
 #define FLOOR_DETECT_TYPE 0 ///< 0 is simulation, 1 is real flight
 #endif
 
-//TODO: Add the camera, fps, detect_type macros to the module xml - Daniel      * Done. -S.
 
-//TODO: Define green floor color range in YUV for simulation, use the sim_poles_panels_mats - Daniel
-// I found these HSV limits to be working really well, but still need to be converted to YUV!!!
-// low_hsv = Scalar(35, 100, 90)
-// high_hsv = Scalar(45, 255, 255)
+//TODO: If I remember correctly, teh camera FPS was decreased for testing puropses by Sunyou - Dani
+
+// Define the YUV range for the green floow for Gazebo
 struct YUV_color floor_simu_min = {80, 0, 0};
 struct YUV_color floor_simu_max = {105, 105, 135};
 
-//TODO: Define green floor color range in YUV for real flight, use the cyberzoo_poles_panels_mats - Daniel
-struct YUV_color floor_real_min = {0, 0, 0};
-struct YUV_color floor_real_max = {0, 0, 0};
-// let's try (47,10,70) / (150,133,133)
+// Define the YUV range for the green floow for Gazebo
+//TODO: Test this range on cyberzoo_poles_panels_mats - Daniel
+struct YUV_color floor_real_min = {47, 10, 70};
+struct YUV_color floor_real_max = {150, 133, 133};
 
 struct YUV_color floor_min;
 struct YUV_color floor_max;
@@ -57,6 +56,7 @@ enum color_set {
     SIMU,
     REAL
 };
+
 
 /// I leave this for navigation guys! TODO: remove this later!
 static abi_event floor_detection_ev;
@@ -68,14 +68,11 @@ static void floor_detection_test_cb(uint8_t __attribute__((unused)) sender_id,
 }
 
 
-
-/// <summary>
 /// Bounds num between min and max.
-/// </summary>
-/// <param name="num"></param>
-/// <param name="min"></param>
-/// <param name="max"></param>
-/// <returns></returns>
+/// \param num
+/// \param min
+/// \param max
+/// \return
 int c_bound_int(int num, int min, int max) {
     int out;
     if (num < min) {
@@ -91,29 +88,36 @@ int c_bound_int(int num, int min, int max) {
 }
 
 
-//TODO: Trying to change the C++ openCV function from ground_obstacle_detect into a image_t friendly openCV free function.
-//      ...Still work in progress, see the TODOs below.
-/// <summary>
 /// OpenCV is for the weak.
-/// Checks the bottom_count of pixels at the bottom of each column if they are white.
-/// If more than certainty many black pixels are found at the bottom of the column, it is considered unsafe.
-/// The columns are grouped into a predefined number of sectors (10). If a sector contains an unsafe column, it will also be considered unsafe.
-/// </summary>
-/// <param name="img"> colorfiltered image_t </param>
-/// <param name="invert_color"> Flase/0 -> input is colorfiltered such that obstacle is marked with white, and safe is maerked with black. You can invert this by setting to 1.
-/// <param name="bottom_count"> The width of the band on the bottom to scan for black </param>
-/// <param name="certainty"> The number of black pixels in a column of the bottom_count band, that makes that direction unsafe. </param>
+/// The input frame is divided into decades, aka sectors.
+/// Checks the bottom_count of rows at the bottom of each column if they are within the given YUV color range.
+/// If a block of pixels are out of the given range, it will be considered as an obstacle,
+/// and lowest row where the obstacle started is recorded in the sector corresponding to the column in question.
+/// A column is safe, when a block of pixels within the range are detected above the the block of pixels out of range.
+/// This way mats, and objects far below the camera are not detected.
+/// \param input image_t from the front camera
+/// \param bottom_count The width of the band on the bottom to scan for black
+/// \param certainty The number of pixels detected, in order to change a column from safe to unsafe, and vica versa.
+/// \param y_m Y range lower limit
+/// \param y_M Y range upper limit
+/// \param u_m U range lower limit
+/// \param u_M U range upper limit
+/// \param v_m V range lower limit
+/// \param v_M V range upper limit
 void c_ground_obstacle_detect(struct image_t *input, int bottom_count, int certainty, uint8_t y_m, uint8_t y_M, uint8_t u_m, uint8_t u_M, uint8_t v_m, uint8_t v_M) {
 
     int threat;
-    int safe_vector[520];
-    uint8_t *pixel = (uint8_t *) input->buf;
+    int obstacle_sector_array[10] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+
+    //Go through all pixels in pairs. Note that by default, the frame is rotated 90deg CW.
+    uint8_t *pixel = (uint8_t *) input->buf;    //First pixel, top left
     for (uint16_t i = 0; i < input->h; i++) {
 
+        //Reset the counter for the pixels out of the range.
         threat = 0;
-        safe_vector[i] = 0;
 
         for (uint16_t j = 0; j < input->w; j += 2) {
+            //Check if the pixel pair is within the range
             if (
                     (pixel[1] >= y_m)
                     && (pixel[1] <= y_M)
@@ -122,61 +126,39 @@ void c_ground_obstacle_detect(struct image_t *input, int bottom_count, int certa
                     && (pixel[2] >= v_m)
                     && (pixel[2] <= v_M)
                     ) {
-//                if (j >= bottom_count) {
-//                    threat++;
-//                }
-                threat--;
-            /// I swapped two, because I think
-            /// if the pixel is GREEN, means safe, so it should decrease the threat,
-            /// and if it is NOT GREEN, it is an obstacle, so increase threat.
-            /// Also I changed the j<bottom_count, because
-            /// we care if an obstacle is *within* some range on the floor.
-            /// Correct me if I got wrong! :)
+
+                threat-=2;
+
             } else {
-//                threat--;
-                if (j < bottom_count) {
-                    threat++;
+                if (j <= bottom_count) {
+                    threat+=2;
                 }
             }
 
             threat = c_bound_int(threat, 0, certainty);
 
-            if (threat == certainty && safe_vector[i] == 0) {
-                safe_vector[i] = input->w - j - certainty;
-                //printf("threat detected at %d\n", i);
+            //If the number of pixels out of the range equal or exceed certainty, the column is unsafe.
+	        int idx = i * 10 / 520;
+            if (threat == certainty) {
+                //In each sector keep track of only the closest obstacle.
+                // Obstacles located lower on the frame are assumed to be closer in space.
+		        if (obstacle_sector_array[idx] == 0 || obstacle_sector_array[idx] > j - certainty + 3){
+		            obstacle_sector_array[idx] = j - certainty + 3;     // +3 is necessary, in case obstacle at j=0: threat at j=0 will be 2, so certainty will be reached at j = certainty-2. We don't write 0 in the array (as 0 represents no obstacle), so instead write 1, so +3
+		        }
             } else if (threat == 0) {
-                safe_vector[i] = 0;
+	        obstacle_sector_array[idx] = 0;
             }
 
-            pixel += 4;
+            pixel += 4; //Go to the next pixel pair.
         }
     }
 
-    ///TODO: merge this block into the double for loop above, so we loop less
-    printf("Safe vector: ");
-    int obstacle_sector_array[10];
-    int range_low, range_high, range_increment;
-    for (int i = 0; i < 10; i++) {
-        obstacle_sector_array[i] = 0;
-        range_increment = 520 / 10;
-        range_low = i * range_increment;
-        range_high = range_low + range_increment;
-        for (int j = range_low; j < range_high; j++) {
-            //Low value means the obstacle is close to the drone
-            //(since the value is the height of the obstacle in the image)
-            if (safe_vector[j] > 0) {
-                if (obstacle_sector_array[i] == 0 || obstacle_sector_array[i] > safe_vector[j]) {
-                    obstacle_sector_array[i] = 1;
-//                  obstacle_sector_array[i] = safe_vector[j];
-                }
-                break;
-            }
-        }
-        printf("%d ", obstacle_sector_array[i]);
+    //TODO: This is here for testing purposes, deletet it for the flight version
+    for (int a=0; a<10; a++){
+        printf("%d ", obstacle_sector_array[a]);
     }
     printf("\n");
 
-    ///TODO: ABI messaging goes here: values of obstacle_sector_array, but
 
     //publish the result via Abi. Passing 10 int is a stupid way but safe haha
     AbiSendMsgFLOOR_DETECTION(ABI_FLOOR_DETECTION_ID, obstacle_sector_array[0], obstacle_sector_array[1],
@@ -185,50 +167,8 @@ void c_ground_obstacle_detect(struct image_t *input, int bottom_count, int certa
                               obstacle_sector_array[8], obstacle_sector_array[9]);
 }
 
-/// <summary>
-/// From binary array of length 5, to single decimal
-/// </summary>
-/// <param name="vector"> </param>
-/// <returns> </returns>
-uint8_t binary_encoder(int *vector){
-    int factor = 1;
-    uint8_t out = 0;
-
-    for (int i=4; i >= 0; i--){
-        out += vector[i] * factor;
-        factor * 2;
-    }
-    return out;
-}
-
-/// <summary>
-/// From decimal int, to binary array with length 5
-/// </summary>
-/// <param name="code"> </param>
-/// <returns> </returns>
-int *binary_decoder(uint8_t code){
-    int n = code;
-    int factor = 1;
-    int array[5];
-    int i = 4;
-
-    while(n > 0){
-        array[i] = n % 2;
-        n = n / 2;
-        i--;
-    }
-    return array;
-}
-
 
 static struct image_t *floor_detect_cb(struct image_t *img){
-
-
-
-    //TODO: Make sure the array length is equal to the width of the front camera image
-//    int safe_array[260];
-    /// we are calling ABI in floor detect cb, that's why c_ground_obstacle_detect has a retrun, and why safe_array is defined outside of it.
-    /// However, I think we can combine the two function, it's not like they are called separately anyways.
 
     //TODO: Measure how many pixels from the bottom the bottom of the obstacle is,
     //      ...if it is in the safe distance away from the drone, hovering at the standard altitude.
@@ -236,36 +176,24 @@ static struct image_t *floor_detect_cb(struct image_t *img){
     //TODO:Alternatively measure how far the obstacle must be, so that it's bottom starts clipping in the image,
     //      ...and maybe take that distance as the safe distance in the periodic?
 
-
-    c_ground_obstacle_detect(img, 50, 5, floor_min.y, floor_max.y, floor_min.u, floor_max.u, floor_min.v, floor_max.v);
-
-
-    // TODO: what variables do you want to publish via Abi? -S.
-    //      What about this: Assume we divide the entire width of the frame into 5 sectors: far left, near left, center, near right, far right.
-    //      If an obstacle is detected in a sector, we set the value to 1, if it's safe, set the value to 0, see the block above.
-    //      Now what we have is essentially a binary number, i.e: obstacle in the far and near left -> 11000.
-    //      We can convert this binary to decimal, and send that decimal via Abi.
-    //      Whatever is subscribed to it will need to decode it back to binary and then to an array.
-//    uint8_t test_val = binary_encoder(obstacle_sector_array);
-//    AbiSendMsgFLOOR_DETECTION(ABI_FLOOR_DETECTION_ID, test_val);    // placeholder; send the result via Abi.
+    c_ground_obstacle_detect(img, 50, 6, floor_min.y, floor_max.y, floor_min.u, floor_max.u, floor_min.v, floor_max.v);
 
     return img;
 }
 
+
 void floor_detection_init(void)
 {
-    //TODO: Undistort the camera image if needed, see computer_vision/undistort_image.c maybe
-
-
-//    if (FLOOR_DETECT_TYPE == SIMU){
-//        floor_min = floor_simu_min;
-//        floor_max = floor_simu_max;
-//    } else if(FLOOR_DETECT_TYPE == REAL){
-//        floor_min = floor_real_min;
-//        floor_max = floor_real_max;
-//    }
-    floor_min = floor_simu_min;
-    floor_max = floor_simu_max;
+    //Select the correct color range.
+    if (FLOOR_DETECT_TYPE == SIMU){
+        floor_min = floor_simu_min;
+        floor_max = floor_simu_max;
+        printf("SIMU");
+    } else if(FLOOR_DETECT_TYPE == REAL){
+        floor_min = floor_real_min;
+        floor_max = floor_real_max;
+        printf("REAL");
+    }
 
     // Subscribe the camera image
     cv_add_to_device(&FLOOR_DETECT_CAMERA, floor_detect_cb, FLOOR_DETECT_FPS);
@@ -275,7 +203,7 @@ void floor_detection_init(void)
 
 }
 
-
+//TODO: Leave this block for the navigation people, remove it if they don't need it anymore
 enum navigation_state_t {
     SAFE,
     OBSTACLE_FOUND,
@@ -283,7 +211,6 @@ enum navigation_state_t {
     OUT_OF_BOUNDS,
     REENTER_ARENA
 };
-
 void floor_detection_periodic(void)
 {
     //TODO: For most of this, check the periodic in orange_avoider_guided
@@ -300,9 +227,6 @@ void floor_detection_periodic(void)
     // ...if obstacle inside the safety band on BOTH side, then do some evasive manoeuvre, like rotate 90deg
     // ...if no obstacle inside the safety band, keep flying forward
 
-
-
-//    return;
 }
 
 

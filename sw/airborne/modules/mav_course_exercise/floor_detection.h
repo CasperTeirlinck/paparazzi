@@ -30,9 +30,6 @@
 
 extern void floor_detection_init(void);
 extern void floor_detection_periodic(void);
-int *binary_decoder(uint8_t code);
-uint8_t binary_encoder(int *vector);
-
 
 struct YUV_color{
     uint8_t y;
