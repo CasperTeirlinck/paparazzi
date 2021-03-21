@@ -36,6 +36,7 @@ static uint8_t moveWaypoint(uint8_t waypoint, struct EnuCoor_i *new_coor);
 static uint8_t increase_nav_heading(float incrementDegrees);
 
 static struct image_t *camera_cb(struct image_t *img);
+static struct image_t *video_capture_cb(struct image_t *img);
 static void video_capture_save(struct image_t *img);
 
 enum navigation_state_t {
@@ -68,22 +69,32 @@ void mav_course_edges_init(void)
 
   // Attach callback function to the front camera for obstacle avoidance
   cv_add_to_device(&front_camera, camera_cb, 0);
+  cv_add_to_device(&front_camera, video_capture_cb, 2);
 
 }
 
 /*
- * Callback from the camera
+ * Callback from the camera for obstacle detection
  * @param img - input image to process
  * @return img
  */
 struct image_t *camera_cb(struct image_t *img)
 {
-
   get_obstacles_edgebox((char *) img->buf, img->w, img->h);
 
-  // video_capture_save(img);
-
   return img;
+}
+
+/*
+ * Callback from the camera for video capture
+ * @param img - input image to process
+ * @return NULL
+ */
+struct image_t *video_capture_cb(struct image_t *img)
+{
+  video_capture_save(img);
+
+  return NULL;
 }
 
 
