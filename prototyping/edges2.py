@@ -15,7 +15,7 @@ datasets = [
     'sim_poles_panels/20190121-161422',           # 6
     'sim_poles_panels_mats/20190121-161931',      # 7
 ]
-FRAMESDIR = datasets[4]
+FRAMESDIR = datasets[5]
 PATH = os.path.dirname(os.path.realpath(__file__))
 
 # load and sort frames from data directory
@@ -39,8 +39,8 @@ def process_frame(frame):
     hor_thr = cv2.getTrackbarPos('horizontal_threshold', 'window')
     
     # Setup frames
-    h, w = frame.shape[:2]
-    frame = cv2.resize(frame, (int(w/2), int(h/2)))
+    #h, w = frame.shape[:2]
+    #frame = cv2.resize(frame, (int(w/2), int(h/2)))
     h, w = frame.shape[:2]
     frame_og = frame.copy()
     frame_og2 = frame.copy()

@@ -16,7 +16,7 @@
 #include <opencv2/core/core.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 // #include "opencv_image_functions.h"
-#include "/home/casper/paparazzi/sw/airborne/modules/computer_vision/opencv_image_functions.h"
+#include "/home/kjell/paparazzi/sw/airborne/modules/computer_vision/opencv_image_functions.h"
 
 using namespace std;
 using namespace cv;
@@ -64,13 +64,15 @@ Mat get_obstacles_edgebox(Mat img, int w, int h) {
   #endif
 
   // Get rid of the noise by blurring
-  medianBlur(image_blur, image_blur, 25);
+  //medianBlur(image_blur, image_blur, 25);  // Blur for real pictures
+  medianBlur(image_blur, image_blur, 41);   // Blur for simulation pictures
   // GaussianBlur(image_gray, image_gray, Size(5, 5), 0);
 
   // using canny to detect the edges of the images
   Mat image_canny;
   int edgeThresh = 100;
-  Canny(image_blur, image_canny, edgeThresh * 2, edgeThresh);
+  // Canny(image_blur, image_canny, edgeThresh * 2, edgeThresh);   // Canny for real pictures
+  Canny(image_blur, image_canny, 200, 250 );          // Canny for simulation pictures
 
   // Finding contours
   vector<vector<Point>> contours;
@@ -96,11 +98,13 @@ Mat get_obstacles_edgebox(Mat img, int w, int h) {
     boundRect_avg = sum(boundRect_img)[0]/boundRect_area;
     pow(boundRect_img - boundRect_avg, 2, boundRect_diff_);
     boundRect_diff = sum(boundRect_diff_)[0]/boundRect_area;
+    cout << boundRect_diff << endl;
 
     // filter boxes
     if (
       ((float)boundRect_area >= (75.f/10000.f)*(w*h)) && 
-      (boundRect_diff < 100)
+      // (boundRect_diff < 100)  // bound texture for real pictures
+      (boundRect_diff < 60)  // Bound texture for simulaiton pictures 
       )
     {
       boundRect_obst.insert(boundRect_obst.end(), boundRect[i]);
