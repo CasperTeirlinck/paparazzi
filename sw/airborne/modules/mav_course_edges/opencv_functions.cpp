@@ -110,14 +110,41 @@ Mat get_obstacles_edgebox(Mat img, int w, int h) {
       )
     {
       boundRect_obst.insert(boundRect_obst.end(), boundRect[i]);
+      
     }
 
   }
+
+  int obstacle[520];
+  for (int i = 0; i < 520; i++)
+  {
+    obstacle[i] = 0;
+    // cout << obstacle[i] << endl;
+  }
   
-  
-  // Draw output
+  //  Prepare Draw output
+  Mat drawing = Mat::zeros(image_canny.size(), CV_8UC3);
   for(size_t i = 0; i< boundRect_obst.size(); i++)
   {
+    // Below this the obstacles will be put into an array
+    // cout << "Boundary of box left begin: " << boundRect_obst[i].y << endl;
+    // cout << "Boundary of box width : "<< boundRect_obst[i].height << endl;
+    // cout << "Boundary of box right end : "<< (boundRect_obst[i].y + boundRect[i].height) << endl;
+    // CASPER we need to write something in the style of if boundRect_obst = true then
+    // boundRect_obst[i].y = 1 
+    
+    int indexer_begin = boundRect_obst[i].y;
+    int indexer_end = (boundRect_obst[i].y + boundRect_obst[i].height ) ;
+
+    for (int j = indexer_begin; j < (indexer_end + 1); j++)
+    {
+      obstacle[j] = 1;
+      // cout << obstacle[j];
+    }
+  
+
+    // everything below this is for drawing the boxes and lines on the figures for testing
+    
     // This picks random color, change this to only red
     Scalar color = Scalar(0, 0, 255); 
     // This draws the rectangle
@@ -132,6 +159,13 @@ Mat get_obstacles_edgebox(Mat img, int w, int h) {
     // line(image, point3, point4, Scalar(255,0,0), 2);
   }
   
+  for (int k =0; k < 520; k++)
+  {
+    cout << obstacle[k]; 
+  }
+
+  cout << "   " << endl; 
+  cout << "   " << endl; 
   // Convert image back to YUV422
   #if !USEDATASET
   colorbgr_opencv_to_yuv422(image, img, w, h);
