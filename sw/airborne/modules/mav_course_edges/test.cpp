@@ -55,7 +55,7 @@ using namespace cv;
 #define DATA DATA_DIR "*.jpg"
 
 // Define settings
-float eb_hor_thresh = 0.6;
+float eb_hor_thresh = 0.4;
 int eb_blur_size = 41;
 int eb_canny_thresh_1 = 200;
 int eb_canny_thresh_2 = 250;
