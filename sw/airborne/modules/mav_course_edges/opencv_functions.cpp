@@ -9,14 +9,11 @@
 #include <string>
 #include <fstream>
 #include <stdio.h>
-#include <unistd.h>
-#include <stdlib.h>
-#include <time.h>
 
 #include <opencv2/core/core.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
-// #include "opencv_image_functions.h"
-#include "/home/casper/paparazzi/sw/airborne/modules/computer_vision/opencv_image_functions.h"
+#include "opencv_image_functions.h"
+// #include "/home/casper/paparazzi/sw/airborne/modules/computer_vision/opencv_image_functions.h"
 
 using namespace std;
 using namespace cv;
@@ -24,7 +21,7 @@ using namespace cv;
 // void edge_box(int, void*);
 
 // When using thet dataset images instead of the camera feed
-#define USEDATASET 1
+#define USEDATASET 0
 
 // Define functions
 #if !USEDATASET
@@ -41,13 +38,20 @@ Mat get_obstacles_edgebox(Mat img, int w, int h) {
 
   // Transform image buffer into an OpenCV YUV422 Mat
   #if !USEDATASET
+  // Original image
   Mat M(h, w, CV_8UC2, img);
   // Convert to OpenCV BGR
   Mat image;
   cvtColor(M, image, CV_YUV2BGR_Y422);
+  // Cropped image
+  Mat image_crop;
+  image_crop = image(Rect((int)(0.4*w), 0, (int)(0.6*w), h));
   // Convert to OpenCV grayscale
   Mat image_gray;
   cvtColor(M, image_gray, CV_YUV2GRAY_Y422);
+  // Blurred image
+  Mat image_blur;
+  image.copyTo(image_blur);
   #else
   // Original image
   Mat image;
@@ -122,7 +126,7 @@ Mat get_obstacles_edgebox(Mat img, int w, int h) {
 
   // Convert image back to YUV422
   #if !USEDATASET
-  colorbgr_opencv_to_yuv422(image, img, w , h);
+  colorbgr_opencv_to_yuv422(image, img, w, h);
   #else
   return image_crop;
   #endif

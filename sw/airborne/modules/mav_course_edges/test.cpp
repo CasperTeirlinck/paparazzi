@@ -55,13 +55,8 @@ using namespace cv;
 #define DATA_DIR "/paparazzi/prototyping/AE4317_2019_datasets/cyberzoo_poles_panels_mats/20190121-142935/"
 #define DATA DATA_DIR "*.jpg"
 
-// Save directory
-static char save_dir[256];
-
 int main()
 {
-  // Set frame output save path
-  // sprintf(save_dir, "~/paparazzi/prototyping/paparazzi_capture");
 
   // Define frame reading iterator
   vector<String> fn;

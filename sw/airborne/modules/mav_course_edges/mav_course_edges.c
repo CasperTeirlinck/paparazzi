@@ -16,6 +16,11 @@
 #include <time.h>
 #include <stdio.h>
 
+#include "lib/encoding/jpeg.h"
+#include <unistd.h>
+#include <stdlib.h>
+#include <time.h>
+
 // Import custom opencv functions
 #include "modules/mav_course_edges/opencv_functions.h"
 
@@ -24,12 +29,14 @@
 
 #define PRINT(string,...) fprintf(stderr, "[mav_course_edges->%s()] " string,__FUNCTION__ , ##__VA_ARGS__)
 
+// Define functions
 static uint8_t moveWaypointForward(uint8_t waypoint, float distanceMeters);
 static uint8_t calculateForwards(struct EnuCoor_i *new_coor, float distanceMeters);
 static uint8_t moveWaypoint(uint8_t waypoint, struct EnuCoor_i *new_coor);
 static uint8_t increase_nav_heading(float incrementDegrees);
 
-struct image_t *camera_cb(struct image_t *img);
+static struct image_t *camera_cb(struct image_t *img);
+static void video_capture_save(struct image_t *img);
 
 enum navigation_state_t {
   SAFE,
@@ -44,6 +51,8 @@ float moveDistance = 2;                 // waypoint displacement [m]
 float heading_increment = 5.f;          // heading angle increment [deg]
 float maxDistance = 2.25;               // max waypoint displacement [m]
 
+static char save_dir[256];
+
 /*
  * ABI messaging events (http://wiki.paparazziuav.org/wiki/ABI)
  */
@@ -54,13 +63,16 @@ float maxDistance = 2.25;               // max waypoint displacement [m]
  */
 void mav_course_edges_init(void)
 {
+  // Set frame output save path
+  sprintf(save_dir, "/home/casper/paparazzi/prototyping/paparazzi_capture");
+
   // Attach callback function to the front camera for obstacle avoidance
   cv_add_to_device(&front_camera, camera_cb, 0);
 
 }
 
 /*
- * callback from the camera
+ * Callback from the camera
  * @param img - input image to process
  * @return img
  */
@@ -68,6 +80,8 @@ struct image_t *camera_cb(struct image_t *img)
 {
 
   get_obstacles_edgebox((char *) img->buf, img->w, img->h);
+
+  // video_capture_save(img);
 
   return img;
 }
@@ -178,4 +192,47 @@ uint8_t moveWaypoint(uint8_t waypoint, struct EnuCoor_i *new_coor)
 {
   waypoint_move_xy_i(waypoint, new_coor->x, new_coor->y);
   return false;
+}
+
+/* 
+ * Saves a frame to disk for debugging the cv algorithm output
+ * Derived from video_capture.c
+ */
+void video_capture_save(struct image_t *img)
+{
+  // Create output folder if necessary
+  if (access(save_dir, F_OK)) {
+    char save_dir_cmd[256];
+    sprintf(save_dir_cmd, "mkdir -p %s", save_dir);
+    if (system(save_dir_cmd) != 0) {
+      printf("[mav_course_edges->video_capture] Could not create images directory %s.\n", save_dir);
+      return;
+    }
+  }
+
+  // Declare storage for image location
+  char save_name[256];
+
+  // Generate image filename from image timestamp
+  sprintf(save_name, "%s/%u.jpg", save_dir, img->pprz_ts);
+  printf("[mav_course_edges->video_capture] Saving image to %s.\n", save_name);
+
+  // Create jpg image from raw frame
+  struct image_t img_jpeg;
+  image_create(&img_jpeg, img->w, img->h, IMAGE_JPEG);
+  jpeg_encode_image(img, &img_jpeg, 99, true);
+
+  // Open file
+  FILE *fp = fopen(save_name, "w");
+  if (fp == NULL) {
+    printf("[mav_course_edges->video_capture] Could not write shot %s.\n", save_name);
+    return;
+  }
+
+  // Save it to the file and close it
+  fwrite(img_jpeg.buf, sizeof(uint8_t), img_jpeg.buf_size, fp);
+  fclose(fp);
+
+  // Free image
+  image_free(&img_jpeg);
 }

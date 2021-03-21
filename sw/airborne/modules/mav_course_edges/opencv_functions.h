@@ -7,7 +7,7 @@
 #define OPENCV_FUNCTIONS_H
 
 // When using thet dataset images instead of the camera feed
-#define USEDATASET 1
+#define USEDATASET 0
 
 #if USEDATASET
 #include <opencv2/core/core.hpp>
@@ -20,9 +20,9 @@ extern "C" {
 #endif
 
 #if !USEDATASET
-void get_obstacles_edgebox(char *img, int width, int height);
+void get_obstacles_edgebox(char *img, int w, int h);
 #else
-Mat get_obstacles_edgebox(Mat img, int width, int height);
+Mat get_obstacles_edgebox(Mat img, int w, int h);
 #endif
 
 #ifdef __cplusplus
