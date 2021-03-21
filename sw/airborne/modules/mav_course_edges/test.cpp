@@ -50,7 +50,8 @@ $ g++ test.cpp opencv_functions.cpp -o test \
 using namespace std;
 using namespace cv;
 
-#define DATA_DIR "/paparazzi/prototyping/AE4317_2019_datasets/sim_poles_panels_mats/20190121-161931/"
+// #define DATA_DIR "/paparazzi/prototyping/AE4317_2019_datasets/sim_poles_panels_mats/20190121-161931/"
+#define DATA_DIR "/paparazzi/prototyping/AE4317_2019_datasets/test_set_single/"
 // #define DATA_DIR "/paparazzi/prototyping/AE4317_2019_datasets/cyberzoo_poles_panels_mats/20190121-142935/"
 #define DATA DATA_DIR "*.jpg"
 
