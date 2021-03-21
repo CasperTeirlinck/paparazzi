@@ -12,9 +12,9 @@
 
 #include <opencv2/core/core.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
-#include "opencv_image_functions.h"
+// #include "opencv_image_functions.h"
 // #include "/home/casper/paparazzi/sw/airborne/modules/computer_vision/opencv_image_functions.h"
-// #include "/home/kjell/paparazzi/sw/airborne/modules/computer_vision/opencv_image_functions.h"
+#include "/home/kjell/paparazzi/sw/airborne/modules/computer_vision/opencv_image_functions.h"
 
 using namespace std;
 using namespace cv;
@@ -22,7 +22,7 @@ using namespace cv;
 // void edge_box(int, void*);
 
 // When using thet dataset images instead of the camera feed
-#define USEDATASET 0
+#define USEDATASET 1
 
 // Define functions
 #if !USEDATASET
@@ -45,8 +45,8 @@ Mat get_obstacles_edgebox(Mat img, int w, int h) {
   Mat image;
   cvtColor(M, image, CV_YUV2BGR_Y422);
   // Cropped image
-  Mat image_crop;
-  image_crop = image(Rect((int)(0.4*w), 0, (int)(0.6*w), h));
+  //Mat image_crop;
+  //image_crop = image(Rect((int)(0.4*w), 0, (int)(0.6*w), h));
   // Convert to OpenCV grayscale
   Mat image_gray;
   cvtColor(M, image_gray, CV_YUV2GRAY_Y422);
@@ -58,8 +58,8 @@ Mat get_obstacles_edgebox(Mat img, int w, int h) {
   Mat image;
   image = img;
   // Cropped image
-  Mat image_crop;
-  image_crop = image(Rect((int)(0.4*h), 0, (int)(0.6*h), w));
+  // Mat image_crop;
+  // image_crop = image(Rect((int)(0.4*h), 0, (int)(0.6*h), w));
   // Convert to OpenCV grayscale
   Mat image_gray;
   cvtColor(image, image_gray, CV_BGR2GRAY);
@@ -96,20 +96,22 @@ Mat get_obstacles_edgebox(Mat img, int w, int h) {
   for(size_t i = 0; i < contours.size(); i++)
   {
     boundRect[i] = boundingRect(contours[i]);
-
+    
     // get texture
     boundRect_area = boundRect[i].width * boundRect[i].height;
     boundRect_img = image_gray(boundRect[i]);
     boundRect_avg = sum(boundRect_img)[0]/boundRect_area;
     pow(boundRect_img - boundRect_avg, 2, boundRect_diff_);
     boundRect_diff = sum(boundRect_diff_)[0]/boundRect_area;
-    cout << boundRect_diff << endl;
-
+    //cout << boundRect_diff << endl;
+    cout << "Boundary of box: "<< boundRect[i].x << endl;
+    cout << "The height limit: " << 0.4*h << endl;
     // filter boxes
     if (
       ((float)boundRect_area >= (75.f/10000.f)*(w*h)) && 
       // (boundRect_diff < 100)  // bound texture for real pictures
-      (boundRect_diff < 60)  // Bound texture for simulaiton pictures 
+      (boundRect_diff < 60) //&& // Bound texture for simulaiton pictures 
+      //((boundRect[i].x + boundRect[i].height) > 0.4*h)
       )
     {
       boundRect_obst.insert(boundRect_obst.end(), boundRect[i]);
@@ -127,12 +129,16 @@ Mat get_obstacles_edgebox(Mat img, int w, int h) {
     // drawContours(drawing, contours, (int)i, color);
     // This draws the rectangle
     rectangle(image, boundRect_obst[i].tl(), boundRect_obst[i].br(), color, 2);
+    Point point1 = Point(0.4*h, 0);
+    Point point2 = Point(0.4*h, w);
+    line(image, point1, point2, Scalar(0,0,255), 1 );
   }
 
   // Convert image back to YUV422
   #if !USEDATASET
   colorbgr_opencv_to_yuv422(image, img, w, h);
   #else
-  return image_crop;
+  //return image_crop;
+  return image;
   #endif
 }
