@@ -13,8 +13,8 @@
 #include <opencv2/core/core.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 // #include "opencv_image_functions.h"
-#include "/home/casper/paparazzi/sw/airborne/modules/computer_vision/opencv_image_functions.h"
-// #include "/home/kjell/paparazzi/sw/airborne/modules/computer_vision/opencv_image_functions.h"
+// #include "/home/casper/paparazzi/sw/airborne/modules/computer_vision/opencv_image_functions.h"
+#include "/home/kjell/paparazzi/sw/airborne/modules/computer_vision/opencv_image_functions.h"
 
 using namespace std;
 using namespace cv;
@@ -77,7 +77,7 @@ Mat get_obstacles_edgebox(Mat img, int w, int h) {
 
   // Get rid of the noise by blurring
   //medianBlur(image_blur, image_blur, 25);  // Blur for real pictures
-  medianBlur(image_blur, image_blur, 41);   // Blur for simulation pictures
+  medianBlur(image_blur, image_blur, eb_blur_size);   // Blur for simulation pictures
   // GaussianBlur(image_gray, image_gray, Size(5, 5), 0);
 
   // using canny to detect the edges of the images
@@ -109,36 +109,41 @@ Mat get_obstacles_edgebox(Mat img, int w, int h) {
     pow(boundRect_img - boundRect_avg, 2, boundRect_diff_);
     boundRect_diff = sum(boundRect_diff_)[0]/boundRect_area;
     //cout << boundRect_diff << endl;
-    cout << "Boundary of box: "<< boundRect[i].x << endl;
-    cout << "The height limit: " << 0.4*h << endl;
+    //cout << "Boundary of box X: "<< boundRect[i].x << endl;
+    //cout << "Boundary of box Y: "<< boundRect[i].y << endl;
+    //cout << "The height limit: " << 0.4*w << endl;
+  
     // filter boxes
     if (
-      ((float)boundRect_area >= (75.f/10000.f)*(w*h)) && 
+      ((float)boundRect_area >= (eb_size_thresh/10000.f)*(w*h)) && 
       // (boundRect_diff < 100)  // bound texture for real pictures
-      (boundRect_diff < 60) //&& // Bound texture for simulaiton pictures 
-      //((boundRect[i].x + boundRect[i].height) > 0.4*h)
+      (boundRect_diff < eb_diff_thresh) && // Bound texture for simulaiton pictures 
+      ((boundRect[i].x + (boundRect[i].width)/2) > eb_hor_thresh*w)
       )
     {
       boundRect_obst.insert(boundRect_obst.end(), boundRect[i]);
     }
 
   }
-
+  /*
   // Draw output
   Mat drawing = Mat::zeros(image_canny.size(), CV_8UC3);
   for(size_t i = 0; i< boundRect_obst.size(); i++)
   {
     // This picks random color, change this to only red
     Scalar color = Scalar(0, 0, 255); 
-    // This draws the contour
-    // drawContours(drawing, contours, (int)i, color);
     // This draws the rectangle
     rectangle(image, boundRect_obst[i].tl(), boundRect_obst[i].br(), color, 2);
     Point point1 = Point(0.4*w, 0);
     Point point2 = Point(0.4*w, h);
+    // This shows the lines of the centers of the bounding boxes
+    //Point point3 = Point((boundRect_obst[i].x + (boundRect_obst[i].width)/2), 0);
+    //Point point4 = Point((boundRect_obst[i].x + (boundRect_obst[i].width)/2),h);
+    // This shows the horizontal filter line
     line(image, point1, point2, Scalar(0,0,255), 1);
+    //line(image, point3, point4, Scalar(255,0,0), 2);
   }
-
+  */
   // Convert image back to YUV422
   #if !USEDATASET
   colorbgr_opencv_to_yuv422(image, img, w, h);
