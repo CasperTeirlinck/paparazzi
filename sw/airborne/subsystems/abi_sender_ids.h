@@ -487,4 +487,11 @@
 #define JOYSTICK_ID 1
 #endif
 
+/* 
+ * FLOOR_DETECTION id's
+ */
+#ifndef ABI_FLOOR_DETECTION_ID
+#define ABI_FLOOR_DETECTION_ID 1
+#endif
+
 #endif /* ABI_SENDER_IDS_H */

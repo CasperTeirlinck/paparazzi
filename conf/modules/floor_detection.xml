@@ -7,7 +7,6 @@
     <file name="floor_detection.h"/>
   </header>
   <init fun="floor_detection_init()"/>
-  <periodic fun="floor_detection_periodic()" freq="1"/>
   <makefile>
     <file name="floor_detection.c"/>
   </makefile>
