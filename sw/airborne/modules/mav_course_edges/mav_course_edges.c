@@ -10,25 +10,18 @@
 
 #include "modules/mav_course_edges/mav_course_edges.h"
 #include "subsystems/abi.h"
-#include "firmwares/rotorcraft/navigation.h"
+// #include "firmwares/rotorcraft/navigation.h"
 #include "generated/airframe.h"
 #include "state.h"
-#include "subsystems/abi.h"
 #include <time.h>
 #include <stdio.h>
-
-#include "lib/encoding/jpeg.h"
 #include <unistd.h>
 #include <stdlib.h>
-#include <time.h>
-#include <sys/types.h>
-#include <pwd.h>
+#include "lib/encoding/jpeg.h"
+#include "generated/flight_plan.h"
 
 // Import custom opencv functions
 #include "modules/mav_course_edges/opencv_functions.h"
-
-#define NAV_C // needed to get the nav functions like Inside...
-#include "generated/flight_plan.h"
 
 #define PRINT(string,...) fprintf(stderr, "[mav_course_edges->%s()] " string,__FUNCTION__ , ##__VA_ARGS__)
 
