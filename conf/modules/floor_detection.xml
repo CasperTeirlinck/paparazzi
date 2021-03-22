@@ -1,0 +1,13 @@
+<!DOCTYPE module SYSTEM "module.dtd">
+<module name="floor_detection" dir="mav_course_exercise">
+  <doc>
+    <description>Obstacle detection based on floor colorfiltering.</description>
+  </doc>
+  <header>
+    <file name="floor_detection.h"/>
+  </header>
+  <init fun="floor_detection_init()"/>
+  <makefile>
+    <file name="floor_detection.c"/>
+  </makefile>
+</module>
