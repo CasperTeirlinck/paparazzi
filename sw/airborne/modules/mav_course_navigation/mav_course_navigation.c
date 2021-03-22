@@ -40,7 +40,7 @@ int len_view, width_drone, center_view;
 float thresh_front, green_max;
 int flag_front, flag_heading, flag_go;
 
-int view_green, view_line;
+int view_green[MT9F002_OUTPUT_HEIGHT], view_line[MT9F002_OUTPUT_HEIGHT], viewrange_comb[MT9F002_OUTPUT_HEIGHT];  // Setup empty array for combined view;
 
 // ------------------------- NAVIGATION GLOBAL VARIABLES END-------------------------------------
 
@@ -52,7 +52,10 @@ int view_green, view_line;
 static abi_event floor_detection_ev;
 static void floor_detection_cb(uint8_t __attribute__((unused)) sender_id, struct FloorDetectionOutput green_detection)
 {
-  view_green = green_detection.obstacle_vector; // View-analysis for green-detection
+  for (int i = 0; i < MT9F002_OUTPUT_HEIGHT; i++) {
+      view_green[i] = green_detection.obstacle_vector[i]; // View-analysis for green-detection
+  }
+
 //    for (int i=0;i<520;i++){
 //        printf("%d, %d, \n", i, very_nice_output.obstacle_vector[i]);
 //    }
@@ -64,7 +67,10 @@ static void floor_detection_cb(uint8_t __attribute__((unused)) sender_id, struct
 static abi_event edgebox_ev;
 static void edgebox_cb(uint8_t __attribute__((unused)) sender_id, struct obstacles_t line_detection)
 {
-  view_line = line_detection.x; // View-analysis for line-detection
+  for (int i = 0; i < MT9F002_OUTPUT_HEIGHT; i++) {
+      view_line[i] = line_detection.x[i]; // View-analysis for line-detection
+  }
+
 //	printf("edgebox: ");
 //  for (int i = 0; i < MT9F002_OUTPUT_HEIGHT; i++) {
 //		printf("%d", obstacles.x[i]);
@@ -76,13 +82,12 @@ static void edgebox_cb(uint8_t __attribute__((unused)) sender_id, struct obstacl
 
 // ------------------------- NAVIGATION FUNCTIONS START-------------------------------------
 // Function used to merge the view-array received from line-detection and green-detection
-int view_combine(int viewrange_line[MT9F002_OUTPUT_HEIGHT], int viewrange_green[MT9F002_OUTPUT_HEIGHT]) {
+void view_combine(int viewrange_line[len_view], int viewrange_green[len_view]) {
 
   // viewrange_line is the view-array from line-detection indicating an obstacle as [1] and no obstacle as [0]
   // viewrange_green is the view-array from green-detection indicating an obstacle as a [non-zero value] and no obstacle as [0]
 
   int len_viewrange = len_view;       // Take length of viewfield
-  int viewrange_comb[len_viewrange];  // Setup empty array for combined view
   int flag_front = 0;                 // Setup flag for if an obstruction is detected in the flightpath of the drone
   int view_max = 0;                // Setup maximum depth seen by the drone
 
@@ -94,7 +99,7 @@ int view_combine(int viewrange_line[MT9F002_OUTPUT_HEIGHT], int viewrange_green[
 
   green_max = view_max;
 
-  for (int i = 0; i < len_view; i++) {  // Cycle through the view from green-detection and line-detection
+  for (int i = 0; i < len_viewrange; i++) {  // Cycle through the view from green-detection and line-detection
 
     if (viewrange_line[i]){             // If line-detection detected an obstacle in column i
 
@@ -118,7 +123,7 @@ int view_combine(int viewrange_line[MT9F002_OUTPUT_HEIGHT], int viewrange_green[
     } // End of else
 
 
-    if (i > (len_view/2-width_drone/2) || i < (len_view/2+width_drone/2)) { // If obstacle is in flight-path and too close, raise flag
+    if (i > (center_view-width_drone/2) && i < (center_view+width_drone/2)) { // If obstacle is in flight-path and too close, raise flag
       if(viewrange_comb[i] < thresh_front){
         flag_front = 1;
       }
@@ -126,12 +131,10 @@ int view_combine(int viewrange_line[MT9F002_OUTPUT_HEIGHT], int viewrange_green[
 
   } // End of i
 
-
-    return viewrange_comb;
 }
 
 // Function used to evaluate optimal flight-heading based on availability of depth in a certain direction
-int triangle(int viewrange[MT9F002_OUTPUT_HEIGHT]){
+int triangle(){
 
 
   int len_viewrange = len_view;               // Copy global variable to local variable
@@ -144,7 +147,7 @@ int triangle(int viewrange[MT9F002_OUTPUT_HEIGHT]){
 
   int cent_start = width_drone/2;   // Initialize evaluation heading at left-side of view placing the left side of the drone at 0
 
-  for (int i = 0; i < len_viewrange-width_drone; i++) { // Cycle through all possible headings, up until right side of the drone reaches right side of view
+  for (int i = 0; i < (len_viewrange-width_drone); i++) { // Cycle through all possible headings, up until right side of the drone reaches right side of view
 
     triang_curmin = view_max;                 // Initialize current heading-minimum to be maximum value of viewfield
     bord = view_max;                          // Initialize current border-value to be maximum value of viewfield
@@ -163,9 +166,9 @@ int triangle(int viewrange[MT9F002_OUTPUT_HEIGHT]){
 
       ind_eval = cent_eval - (width_drone/2) + j;   // Compute index within to-be-evaluated triangle
 
-      if (viewrange[ind_eval] < bord) {             // If depth-value of column is within evaluation-triangle
-        if (viewrange[ind_eval] < triang_curmin) {  // If depth-value of column is lower than thusfar received minimum-depth
-          triang_curmin = viewrange[ind_eval];      // Update minimum-depth of heading-triangle
+      if (view_comb[ind_eval] < bord) {             // If depth-value of column is within evaluation-triangle
+        if (view_comb[ind_eval] < triang_curmin) {  // If depth-value of column is lower than thusfar received minimum-depth
+          triang_curmin = view_comb[ind_eval];      // Update minimum-depth of heading-triangle
         }
       }
 
@@ -191,9 +194,9 @@ for (int k = 0; k < len_viewrange; k++) { // Cycle through evaluated headings
     }
   }
 
-int flag_error = 1;                     // Initialize error flag to true for out-of-bounds error
-if(target > 0 && target < len_view){    // If suitable target is found within the range of view
-    flag_error = 0;                     // Set error flag to false
+int flag_error = 1;                           // Initialize error flag to true for out-of-bounds error
+if(target > 0 && target < len_viewrange){     // If suitable target is found within the range of view
+    flag_error = 0;                           // Set error flag to false
   }
 
   flag_heading = flag_error;
@@ -222,7 +225,7 @@ void mav_course_navigation_periodic(void)
 
   // RECEIVE VIEW ARRAYS HERE
   int flag_bottom = 0;
-  int angle_bottom = 10;
+  float angle_bottom = 10;
 
 
   len_view = MT9F002_OUTPUT_HEIGHT;   // sizeof(view_green)/sizeof(view_green[0]);  // Compute range of viewfield resolution
@@ -231,13 +234,12 @@ void mav_course_navigation_periodic(void)
 
   thresh_front = 10.; // Threshold for ostacles within flightpath, obstacles within this will trigger flag_front
 
-  flag_front = 1;     // Initialize flag for closeby obstacle, only nullified when no obstacle is found close in flightpath
-  flag_heading = 1;   // Initialize flag for heading, only nullified when optimal heading within range is found
-  flag_go = 1;        // Initialize flag for go-command, only nullified when optimal in-bound heading is found
+  flag_front = 1;     // Initialize flag for closeby obstacle, only nullified when no obstacle is found close in flightpath (1 means issue)
+  flag_heading = 1;   // Initialize flag for heading, only nullified when optimal heading within range is found (1 means issue)
+  flag_go = 1;        // Initialize flag for go-command, only nullified when optimal in-bound heading is found (1 means issue)
 
-  int view_comb;  //[len_view]              // Initialize combined view-array
-
-  int heading;
+  int view_comb;  // Initialize combined view-array
+  int heading;   // Initialize heading to be computed by optimality algorithm
 
   float len_view_float = (float)len_view;   // Initialize datatype-change variable
   float dy_ind, dy;         // Initialize index-difference between
@@ -245,7 +247,7 @@ void mav_course_navigation_periodic(void)
   float headingchange, velocity;
 
 
-  view_comb = view_combine(view_line, view_green);   // Combine received view-analyses using view_combine function
+  view_combine(view_line, view_green);   // Combine received view-analyses using view_combine function
 
   if (flag_front || flag_bottom) {  // If an error flag is triggered for either too-close object or out-of-bounds state
 
@@ -274,7 +276,7 @@ void mav_course_navigation_periodic(void)
 
   else{ // If no heading-error is flagged meaning a possible heading is found
     dy_ind = (float)(heading - center_view);        // Determine heading-change in number of pixels
-    headingchange = dy_ind / len_view_float * 103.; // Convert heading-change in pixels to degrees (FOV of 103 degrees = horizontal pixel-width)
+    headingchange = dy_ind / len_view_float * 103.; // Convert heading-change in pixels to degrees (FOV of 103 degrees = 520 horizontal pixel-width)
 
     guidance_h_set_guided_heading(RadOfDeg(headingchange)+stateGetNedToBodyEulers_f()->psi);  // Command drone to turn
 
