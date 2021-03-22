@@ -34,6 +34,10 @@ struct YUV_color{
     uint8_t v;
 };
 
+struct FloorDetectionOutput {
+    int obstacle_vector[520];
+};
+
 extern struct YUV_color floor_min;
 extern struct YUV_color floor_max;
 

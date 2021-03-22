@@ -57,6 +57,20 @@ enum color_set {
     REAL
 };
 
+
+
+///// I leave this for navigation guys!
+//static abi_event floor_detection_ev;
+//static void floor_detection_test_cb(uint8_t __attribute__((unused)) sender_id, struct FloorDetectionOutput test1)
+//{
+//    /// I checked it working well!
+//    for (int i=0;i<520;i++){
+//        printf("%d, %d, \n", i, test1.obstacle_vector[i]);
+//    }
+//}
+
+
+
 /// Bounds num between min and max.
 /// \param num
 /// \param min
@@ -97,6 +111,10 @@ void c_ground_obstacle_detect(struct image_t *input, int bottom_count, int certa
 
     int threat;
     int obstacle_sector_array[10] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+
+    /// you can change the variable name if you want!
+    /// usage is something like this... detection_output.obstacle_vector[i] = 0;
+    struct FloorDetectionOutput detection_output;
 
     //Go through all pixels in pairs. Note that by default, the frame is rotated 90deg CW.
     uint8_t *pixel = (uint8_t *) input->buf;    //First pixel, top left
@@ -148,12 +166,15 @@ void c_ground_obstacle_detect(struct image_t *input, int bottom_count, int certa
 //    }
 //    printf("\n");
 
+    // publish the result via Abi.
+    AbiSendMsgFLOOR_DETECTION(ABI_FLOOR_DETECTION_ID, detection_output);
+
 
     //publish the result via Abi. Passing 10 int is a stupid way but safe haha
-    AbiSendMsgFLOOR_DETECTION(ABI_FLOOR_DETECTION_ID, obstacle_sector_array[0], obstacle_sector_array[1],
-                              obstacle_sector_array[2], obstacle_sector_array[3], obstacle_sector_array[4],
-                              obstacle_sector_array[5], obstacle_sector_array[6], obstacle_sector_array[7],
-                              obstacle_sector_array[8], obstacle_sector_array[9]);
+//    AbiSendMsgFLOOR_DETECTION(ABI_FLOOR_DETECTION_ID, obstacle_sector_array[0], obstacle_sector_array[1],
+//                              obstacle_sector_array[2], obstacle_sector_array[3], obstacle_sector_array[4],
+//                              obstacle_sector_array[5], obstacle_sector_array[6], obstacle_sector_array[7],
+//                              obstacle_sector_array[8], obstacle_sector_array[9]);
 }
 
 
@@ -186,6 +207,7 @@ void floor_detection_init(void)
 
     // Subscribe the camera image
     cv_add_to_device(&FLOOR_DETECT_CAMERA, floor_detect_cb, FLOOR_DETECT_FPS);
+//    AbiBindMsgFLOOR_DETECTION(ABI_FLOOR_DETECTION_ID, &floor_detection_ev, floor_detection_test_cb);
 
 }
 
