@@ -235,8 +235,8 @@ void mav_course_navigation_periodic(void)
   // ------------------------- NAVIGATION MAIN START-------------------------------------
 
   // RECEIVE VIEW ARRAYS HERE
-  // float view_green[] = DANI
-  // int view_line[] = LINEBOIS
+  float view_green[] = very_nice_output
+  int view_line[] = obstacles
   //
   // int flag_bottom = RICARDO
   // int angle_bottom = RICARDO
