@@ -15,6 +15,8 @@
         <define name="FLOOR_DETECT_FPS" value="0"/>
         <define name="FLOOR_DETECT_TYPE" value="1"/>  <!-- 1 for AP -->
       </module>
+
+      <module name="mav_course_navigation"/>
       
       <!-- Detect orange -->
 <!--      <define name="COLOR_OBJECT_DETECTOR_LUM_MIN1" value="30"/>-->
@@ -34,7 +36,9 @@
         <define name="FLOOR_DETECT_FPS" value="1"/>
         <define name="FLOOR_DETECT_TYPE" value="0"/>  <!-- 0 for SIM -->
       </module>
-      
+
+      <module name="mav_course_navigation"/>
+
       <!-- Detect orange -->
 <!--      <define name="COLOR_OBJECT_DETECTOR_LUM_MIN1" value="41"/>-->
 <!--      <define name="COLOR_OBJECT_DETECTOR_LUM_MAX1" value="183"/>-->
