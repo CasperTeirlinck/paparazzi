@@ -52,7 +52,7 @@ int view_green[MT9F002_OUTPUT_HEIGHT], view_line[MT9F002_OUTPUT_HEIGHT];
 static abi_event floor_detection_ev;
 static void floor_detection_cb(uint8_t __attribute__((unused)) sender_id, struct FloorDetectionOutput green_detection)
 {
-  view_green = green_detection.obstacle_vector;
+  view_green = green_detection.obstacle_vector; // View-analysis for green-detection
 //    for (int i=0;i<520;i++){
 //        printf("%d, %d, \n", i, very_nice_output.obstacle_vector[i]);
 //    }
@@ -64,7 +64,7 @@ static void floor_detection_cb(uint8_t __attribute__((unused)) sender_id, struct
 static abi_event edgebox_ev;
 static void edgebox_cb(uint8_t __attribute__((unused)) sender_id, struct obstacles_t line_detection)
 {
-  view_line = line_detection.x;
+  view_line = line_detection.x; // View-analysis for line-detection
 //	printf("edgebox: ");
 //  for (int i = 0; i < MT9F002_OUTPUT_HEIGHT; i++) {
 //		printf("%d", obstacles.x[i]);
@@ -220,9 +220,6 @@ void mav_course_navigation_periodic(void)
   // ------------------------- NAVIGATION MAIN START-------------------------------------
 
   // RECEIVE VIEW ARRAYS HERE
-  int view_green[] = green_detection;   // View-analysis for green-evaluation
-  int view_line[] = line_detection;     // View-analysis for line-detection
-
   // int flag_bottom = RICARDO
   // int angle_bottom = RICARDO
 
@@ -237,7 +234,7 @@ void mav_course_navigation_periodic(void)
   flag_heading = 1;   // Initialize flag for heading, only nullified when optimal heading within range is found
   flag_go = 1;        // Initialize flag for go-command, only nullified when optimal in-bound heading is found
 
-  float view_comb[len_view];                // Initialize combined view-array
+  float view_comb;  //[len_view]              // Initialize combined view-array
 
   float len_view_float = (float)len_view;   // Initialize datatype-change variable
   float dy_ind, dy;         // Initialize index-difference between
