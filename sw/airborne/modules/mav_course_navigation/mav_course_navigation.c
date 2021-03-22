@@ -6,7 +6,7 @@
 /**
  * @file "modules/orange_avoider/mav_course_navigation.c"
  * @author Group 3 MAV course 2021
- * 
+ *
  */
 
 #include "modules/orange_avoider/orange_avoider_guided.h"
@@ -45,7 +45,7 @@ int vv8;
 int vv9;
 int vv10;
 
-/* 
+/*
  * Define global variables
  */
 enum navigation_state_t {
@@ -55,10 +55,8 @@ enum navigation_state_t {
     OUT_OF_BOUNDS,
     REENTER_ARENA
 };
-float headingchange;
-float velocity;
 
-/* 
+/*
  * ABI messages
  */
 #ifndef ABI_FLOOR_DETECTION_ID
@@ -85,6 +83,139 @@ static void edgebox_cb(uint8_t __attribute__((unused)) sender_id, struct obstacl
 //	printf(" \n");
 }
 
+// ------------------------- NAVIGATION GLOBAL VARIABLES START-------------------------------------
+
+int len_view, width_drone, center_view;
+float thresh_front, green_max;
+
+// ------------------------- NAVIGATION GLOBAL VARIABLES END-------------------------------------
+
+// ------------------------- NAVIGATION FUNCTIONS START-------------------------------------
+// Function used to merge the view-array received from line-detection and green-detection
+int view_combine(int viewrange_line, int viewrange_green) {
+
+  // viewrange_line is the view-array from line-detection indicating an obstacle as [1] and no obstacle as [0]
+  // viewrange_green is the view-array from green-detection indicating an obstacle as a [non-zero value] and no obstacle as [0]
+
+  int len_viewrange = len_view;       // Take length of viewfield
+  int viewrange_comb[len_viewrange];  // Setup empty array for combined view
+  int flag_front = 0;                 // Setup flag for if an obstruction is detected in the flightpath of the drone
+  float view_max = 0.;                // Setup maximum depth seen by the drone
+
+  for (int i = 0; i < len_viewrange; i++) { // Cycle through the green detection view to find maximum value
+    if (viewrange_green[i] > view_max) {
+      view_max = viewrange_green[i];
+    }
+  }
+
+
+  for (int i = 0; i < len_view; i++) {  // Cycle through the view from green-detection and line-detection
+
+    if (viewrange_line[i]){             // If line-detection detected an obstacle in column i
+
+      if (viewrange_green[i]) {         // If both line- and green-detection return obstacle for column i, take green-distance
+        viewrange_comb[i] = viewrange_green[i];
+      }
+      else{                             // If only line-detection returns obstacle for column i, take absolute 0 for distance
+        viewrange_comb[i] = 0;
+      }
+
+    }
+
+    else{                       // If line-detection does not return an obstacle in column i
+      if (!viewrange_green) {   // If green returns no obstacle in sight, take green max-distance
+        viewrange_comb[i] = view_max;
+      }
+      else{
+      viewrange_comb[i] = viewrange_green[i]; // If green returns distance to obstacle, take green-distance
+      }
+
+    } // End of else
+
+
+    if (i > (len_view/2-width_drone/2) || i < (len_view/2+width_drone/2)) { // If obstacle is in flight-path and too close, raise flag
+      if(viewrange_comb[i] < thresh_front){
+        flag_front = 1;
+      }
+    }
+
+  } // End of i
+
+
+    return viewrange_comb, flag_front, view_max;
+}
+
+// Function used to evaluate optimal flight-heading based on availability of depth in a certain direction
+int triangle(int viewrange){
+
+
+  int len_viewrange = len_view;               // Copy global variable to local variable
+  float view_max = green_max;                 // Copy global variable to local variable
+  float triang_min[len_viewrange];            // Initialize array to store minimum distance for each heading
+  float triang_curmin, bord;                  // Initialize minimum value of current triangle and border-value of current index
+  float width = (float)width_drone, jfloat;   // Initialize datatype-change variables
+  int cent_eval, ind_eval;                    // Initialize variables for index-of-evaluation-center and index-of-evaluation
+
+
+  int cent_start = width_drone/2;   // Initialize evaluation heading at left-side of view placing the left side of the drone at 0
+
+  for (int i = 0; i < len_viewrange-width_drone; i++) { // Cycle through all possible headings, up until right side of the drone reaches right side of view
+
+    triang_curmin = view_max;                 // Initialize current heading-minimum to be maximum value of viewfield
+    bord = view_max;                          // Initialize current heading-minimum to be maximum value of viewfield
+
+    cent_eval = cent_start + i;               // Compute center of to-be-evaluated triangle
+
+    for (int j = 0; j < width_drone; j++) {   // Cycle through the width of the to-be-evaluated triangle
+      jfloat = (float)j;                      // Copy integer variable to float variable for calculation purposes
+
+      if (j <= width_drone/2) {                   // If evaluation-index falls in the left-half of the evaluated triangle
+        bord = view_max / (width/2.) * jfloat ;   // Compute border value limiting the evaluated range in the column
+      }
+      else if (j > width_drone/2) { // If evaluation-index falls in the right-half of the evaluated triangle
+        bord = view_max / (width/2.) * (width - jfloat) ; // Compute border value limiting the evaluated range in the column
+      }
+
+      ind_eval = cent_eval - (width_drone/2) + j;   // Compute index within to-be-evaluated triangle
+
+      if (viewrange[ind_eval] < bord) {             // If depth-value of column is within evaluation-triangle
+        if (viewrange[ind_eval] < triang_curmin) {  // If depth-value of column is lower than thusfar received minimum-depth
+          triang_curmin = viewrange[ind_eval];      // Update minimum-depth of heading-triangle
+        }
+      }
+
+    } // End of j
+
+    triang_min[i] = triang_curmin;  // Update heading-minimum in storage array of heading minima
+
+  } // End of i
+
+float dir_max = 0;          // Initialize maximum of evaluated headings
+int target = -999;          // Initialize target heading to -999 to simulate impossible, far, out of bounds target
+int center = center_view;   // Copy global variable to local variable
+
+for (int k = 0; k < len_viewrange; k++) { // Cycle through evaluated headings
+    if (triang_min[k] > dir_max) {        // If minimum depth of heading-triangle is more than thusfar seen maximum depth
+      dir_max = triang_min[k];            // Update maximum depth seen so far
+      target = k;                         // Update optimal heading index
+    }
+    else if (triang_min[k] == dir_max && abs(k - center) < abs(target - center)) {
+      // If minimum depth of heading-triangle is equal to the thusfar seen maximum depth, but index is closer to center (meaning smaller cange)
+      dir_max = triang_min[k];            // Update maximum depth seen so far
+      target = k;                         // Update optimal heading index
+    }
+  }
+
+int flag_error = 1;                     // Initialize error flag to true for out-of-bounds error
+if(target > 0 && target < len_view){    // If suitable target is found within the range of view
+    flag_error = 0;                     // Set error flag to false
+  }
+
+  return target, flag_error;  // Return target heading and error flag
+}
+
+// ------------------------- NAVIGATION FUNCTIONS END-------------------------------------
+
 /*
  * Initialisation function
  */
@@ -100,64 +231,83 @@ void mav_course_navigation_init(void)
  */
 void mav_course_navigation_periodic(void)
 {
-  
-	int vvarray[10] = {vv1,vv2,vv3,vv4,vv5,vv6,vv7,vv8,vv9,vv10};
 
-	int holesize = 0;
-	int biggesthole = 0;
-	int biggestleft = 0;
-	int biggestright = 0;
-	int leftbound;
-	int rightbound;
+  // ------------------------- NAVIGATION MAIN START-------------------------------------
 
-	for (int i=0;i<10;i++){
-		if (holesize == 0){// looking for the start of a hole, holesize of 0 means we are not in a hole
-			if (vvarray[i] == 0){//it's the left bound
-				leftbound = i;
-				holesize = holesize + 1;
-			}
-			}
-		else{
-			if (vvarray[i] == 0){
-				rightbound = i;
-				holesize = holesize + 1;
-				if (i==9){// if we are at the end of the data, we are also at the end of the hole
-					if (holesize > biggesthole){//found the new biggest hole
-									biggesthole=holesize;
-									biggestleft = leftbound;
-									biggestright = rightbound;
-								}
-								holesize = 0; //reset holesize
-			}
-		}
-			else{// found the end of a hole
-				if (holesize > biggesthole){//found the new biggest hole
-					biggesthole=holesize;
-					biggestleft = leftbound;
-					biggestright = rightbound;
-				}
-				holesize = 0; //reset holesize
+  // RECEIVE VIEW ARRAYS HERE
+  // float view_green[] = DANI
+  // int view_line[] = LINEBOIS
+  //
+  // int flag_bottom = RICARDO
+  // int angle_bottom = RICARDO
 
 
-			}
-		}
-	}
+  len_view = sizeof(view_green)/sizeof(view_green[0]);  // Compute range of viewfield resolution
+  width_drone = len_view*0.2;                           // Determine flightpath width, set at 20% of view
+  center_view = len_view/2;                             // Determine center index of viewfield
+
+  thresh_front = 10.; // Threshold for ostacles within flightpath, obstacles within this will trigger flag_front
+
+  int flag_front = 1;     // Initialize flag for closeby obstacle, only nullified when no obstacle is found close in flightpath
+  int flag_heading = 1;   // Initialize flag for heading, only nullified when optimal heading within range is found
+  int flag_go = 1;        // Initialize flag for go-command, only nullified when optimal in-bound heading is found
+
+  float view_comb[len_view];                // Initialize combined view-array
+
+  float len_view_float = (float)len_view;   // Initialize datatype-change variable
+  float dy_ind, len_view_float, dy;         // Initialize index-difference between
+
+  float headingchange, velocity;
 
 
-	if (biggesthole > 0){ //if there is a safe direction, turn to that direction
-		velocity = 0.3;
-		headingchange =( (biggestleft + biggestright)/2.f -4.5)/4.5 * 52.f;
+  [view_comb, flag_front, green_max] = view_combine(view_line, view_green);   // Combine received view-analyses using view_combine function
 
-	}
-	else{// if there is no safe direction, stop and turn 60 degrees
-		velocity = 0.0;
-		headingchange  = 60.f; //now it always turns clockwise, maybe change
-	}
+  if (flag_front || flag_bottom) {  // If an error flag is triggered for either too-close object or out-of-bounds state
 
-	guidance_h_set_guided_body_vel(velocity,0);
-	guidance_h_set_guided_heading(RadOfDeg(headingchange)+stateGetNedToBodyEulers_f()->psi);
+    velocity = 0.0;                               // Set velocity to 0
+    guidance_h_set_guided_body_vel(velocity,0);   // Command drone to stop
 
-	VERBOSE_PRINT("biggestleft,biggestright,biggesthole, headingchange: %d, %d, %d, %.2f\n",biggestleft,biggestright,biggesthole,headingchange);
+    if (flag_bottom && (angle_bottom < 270 && angle_bottom > 90) ) {  // If out-of-bounds is triggered and out-of-bounds is in flight-direction
+
+      headingchange  = angle_bottom;              // Set heading-change to have heading coincide with green-centroid of bottom-camera (a.k.a. playing-field)
+      guidance_h_set_guided_heading(RadOfDeg(headingchange)+stateGetNedToBodyEulers_f()->psi);  // Command drone to turn
+    }
+  }
+
+
+  [heading, flag_heading] = triangle(view_comb);  // Evaluate headings to find optimal heading of drone
+
+  if (flag_heading) {  // If heading error is flagged meaning no possible heading is found
+
+    velocity = 0.0;                               // Set velocity to 0
+    guidance_h_set_guided_body_vel(velocity,0);   // Command drone to stop
+
+    headingchange  = 60.f;                        // Set heading-change to 60 degrees clockwise to provide new heading-possibilities
+    guidance_h_set_guided_heading(RadOfDeg(headingchange)+stateGetNedToBodyEulers_f()->psi);  // Command drone to turn
+
+  }
+
+  else{ // If no heading-error is flagged meaning a possible heading is found
+    dy_ind = (float)(heading - center_view);        // Determine heading-change in number of pixels
+    headingchange = dy_ind / len_view_float * 103.; // Convert heading-change in pixels to degrees (FOV of 103 degrees = horizontal pixel-width)
+
+    guidance_h_set_guided_heading(RadOfDeg(headingchange)+stateGetNedToBodyEulers_f()->psi);  // Command drone to turn
+
+    flag_go = 0;  // Set flag-go to zero allowing the drone to continue flying forward
+
+  }
+
+  if (!flag_go) { // If no go-prohibiting errors are encountered
+
+    velocity = 0.0;                               // Set velocity to low speed
+    guidance_h_set_guided_body_vel(velocity,0);   // Command drone to move forward
+  }
+
+
+  // ------------------------- NAVIGATION MAIN END-------------------------------------
+
+
+	//VERBOSE_PRINT("biggestleft,biggestright,biggesthole, headingchange: %d, %d, %d, %.2f\n",biggestleft,biggestright,biggesthole,headingchange);
 
 
 
