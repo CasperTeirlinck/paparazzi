@@ -33,38 +33,25 @@
 #define MT9F002_OUTPUT_HEIGHT 520
 #endif
 
-// Output from ground detection obstacle detection
-int vv1;
-int vv2;
-int vv3;
-int vv4;
-int vv5;
-int vv6;
-int vv7;
-int vv8;
-int vv9;
-int vv10;
 
-/*
- * Define global variables
- */
-enum navigation_state_t {
-    SAFE,
-    OBSTACLE_FOUND,
-    SEARCH_FOR_SAFE_HEADING,
-    OUT_OF_BOUNDS,
-    REENTER_ARENA
-};
+// ------------------------- NAVIGATION GLOBAL VARIABLES START-------------------------------------
 
-/*
- * ABI messages
- */
+int len_view, width_drone, center_view;
+float thresh_front, green_max;
+
+int view_green[MT9F002_OUTPUT_HEIGHT], view_line[MT9F002_OUTPUT_HEIGHT];
+
+// ------------------------- NAVIGATION GLOBAL VARIABLES END-------------------------------------
+
+// ------------------------- ABI COMMUNICATION START-------------------------------------
+
 #ifndef ABI_FLOOR_DETECTION_ID
 #define ABI_FLOOR_DETECTION_ID ABI_BROADCAST
 #endif
 static abi_event floor_detection_ev;
-static void floor_detection_cb(uint8_t __attribute__((unused)) sender_id, struct FloorDetectionOutput very_nice_output)
+static void floor_detection_cb(uint8_t __attribute__((unused)) sender_id, struct FloorDetectionOutput green_detection)
 {
+  view_green = green_detection.obstacle_vector;
 //    for (int i=0;i<520;i++){
 //        printf("%d, %d, \n", i, very_nice_output.obstacle_vector[i]);
 //    }
@@ -74,8 +61,9 @@ static void floor_detection_cb(uint8_t __attribute__((unused)) sender_id, struct
 #define EDGEBOX_ID ABI_BROADCAST
 #endif
 static abi_event edgebox_ev;
-static void edgebox_cb(uint8_t __attribute__((unused)) sender_id, struct obstacles_t obstacles)
+static void edgebox_cb(uint8_t __attribute__((unused)) sender_id, struct obstacles_t line_detection)
 {
+  view_line = line_detection.x;
 //	printf("edgebox: ");
 //  for (int i = 0; i < MT9F002_OUTPUT_HEIGHT; i++) {
 //		printf("%d", obstacles.x[i]);
@@ -83,12 +71,7 @@ static void edgebox_cb(uint8_t __attribute__((unused)) sender_id, struct obstacl
 //	printf(" \n");
 }
 
-// ------------------------- NAVIGATION GLOBAL VARIABLES START-------------------------------------
-
-int len_view, width_drone, center_view;
-float thresh_front, green_max;
-
-// ------------------------- NAVIGATION GLOBAL VARIABLES END-------------------------------------
+// ------------------------- ABI COMMUNICATION END-------------------------------------
 
 // ------------------------- NAVIGATION FUNCTIONS START-------------------------------------
 // Function used to merge the view-array received from line-detection and green-detection
@@ -162,7 +145,7 @@ int triangle(int viewrange){
   for (int i = 0; i < len_viewrange-width_drone; i++) { // Cycle through all possible headings, up until right side of the drone reaches right side of view
 
     triang_curmin = view_max;                 // Initialize current heading-minimum to be maximum value of viewfield
-    bord = view_max;                          // Initialize current heading-minimum to be maximum value of viewfield
+    bord = view_max;                          // Initialize current border-value to be maximum value of viewfield
 
     cent_eval = cent_start + i;               // Compute center of to-be-evaluated triangle
 
@@ -235,9 +218,9 @@ void mav_course_navigation_periodic(void)
   // ------------------------- NAVIGATION MAIN START-------------------------------------
 
   // RECEIVE VIEW ARRAYS HERE
-  float view_green[] = very_nice_output
-  int view_line[] = obstacles
-  //
+  int view_green[] = green_detection;   // View-analysis for green-evaluation
+  int view_line[] = line_detection;     // View-analysis for line-detection
+
   // int flag_bottom = RICARDO
   // int angle_bottom = RICARDO
 
@@ -305,24 +288,4 @@ void mav_course_navigation_periodic(void)
 
 
   // ------------------------- NAVIGATION MAIN END-------------------------------------
-
-
-	//VERBOSE_PRINT("biggestleft,biggestright,biggesthole, headingchange: %d, %d, %d, %.2f\n",biggestleft,biggestright,biggesthole,headingchange);
-
-
-
-
-    //TODO: For most of this, check the periodic in orange_avoider_guided
-
-    //TODO: Decide on a safe distance from the drone, i.e. 1 meter
-    //TODO: Measure how many pixel wide (+ safety margin) the image of the drone from the safe distance.
-    // ...i.e. take a picture with a drone of an other drone located 1 meter away in front of it
-    //TODO: take this width in the center of the image, I'll call it safety band from now on.
-
-    /// Front camera horizontal FOV 1.8rad~=103deg (bebop2.sdf #233) -S.
-
-    //TODO: switch case logic, like in orange_avoider_guided:
-    // ...if obstacle inside the safety band on one side, then turn away one increment
-    // ...if obstacle inside the safety band on BOTH side, then do some evasive manoeuvre, like rotate 90deg
-    // ...if no obstacle inside the safety band, keep flying forward
 }
