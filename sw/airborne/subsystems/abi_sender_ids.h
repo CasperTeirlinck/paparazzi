@@ -502,4 +502,11 @@
 #define EDGEBOX_ID 1
 #endif
 
+/* 
+ * OUTOFBOUNDS message
+ */
+#ifndef OUTOFBOUNDS_ID
+#define OUTOFBOUNDS_ID 1
+#endif
+
 #endif /* ABI_SENDER_IDS_H */
