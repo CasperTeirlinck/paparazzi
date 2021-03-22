@@ -492,6 +492,12 @@
  */
 #ifndef ABI_FLOOR_DETECTION_ID
 #define ABI_FLOOR_DETECTION_ID 1
+
+/* 
+ * OBSTACLES message
+ */
+#ifndef EDGEBOX_ID
+#define EDGEBOX_ID 1
 #endif
 
 #endif /* ABI_SENDER_IDS_H */
