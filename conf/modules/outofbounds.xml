@@ -1,33 +1,14 @@
 <!DOCTYPE module SYSTEM "module.dtd">
-
-<module name="mav_course_edges">
+<module name="outofbounds" dir="outofbounds">
   <doc>
-    <description>
-    This module is for the course AE4317 Autonomous Flight of Micro Air Vehicles at the TU Delft.
-    This module uses edge detection to detect and avoid obstacles.
-    </description>
+    <description>Avoid reaching OOB.</description>
   </doc>
-
-  <settings>
-    <dl_settings>
-      <dl_settings name="EdgeBox">
-         <dl_setting var="eb_hor_thresh" min="0" step="0.05" max="1"/>
-         <dl_setting var="eb_blur_size" min="0" step="1" max="50"/>
-         <dl_setting var="eb_canny_thresh_1" min="0" step="1" max="255"/>
-         <dl_setting var="eb_canny_thresh_2" min="0" step="1" max="255"/>
-         <dl_setting var="eb_size_thresh" min="0" step="1" max="100"/>
-         <dl_setting var="eb_diff_thresh" min="0" step="1" max="500"/>
-         <dl_setting var="show_debug" min="0" step="1" max="1" values="Off|On"/>
-      </dl_settings>
-    </dl_settings>
-  </settings>
-  
   <header>
-    <file name="mav_course_edges.h"/>
+    <file name="outofbounds.h"/>
   </header>
-  <init fun="mav_course_edges_init()"/>
-  <makefile target="ap">
-    <file name="mav_course_edges.c"/>
+  <init fun="init_outofbounds()"/>
+ <makefile target="ap">
+    <file name="outofbounds.c"/>
 
     <file name="opencv_functions.cpp"/>
     <file name="opencv_image_functions.cpp" dir="modules/computer_vision"/>
@@ -37,7 +18,7 @@
 
   </makefile>
   <makefile target="nps">
-    <file name="mav_course_edges.c"/>
+    <file name="outofbounds.c"/>
 
     <file name="opencv_functions.cpp"/>
     <file name="opencv_image_functions.cpp" dir="modules/computer_vision"/>

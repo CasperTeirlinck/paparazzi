@@ -223,6 +223,10 @@
       <field name="obstacles" type="struct obstacles_t">Array indexed over frame width indicating if an obstacle exists or not</field>
     </message>
 
+    <message name="OUTOFBOUNDS" id="31">
+      <field name="relangle" type="float">Angle between heading and centoid of safe/green region, measured ccw</field>
+    </message>
+
   </msg_class>
 
 </protocol>
