@@ -17,6 +17,15 @@
 #include <stdio.h>
 #include <time.h>
 
+#define MAV_COURSE_NAVIGATION_VERBOSE TRUE
+
+#define PRINT(string,...) fprintf(stderr, "[orange_avoider->%s()] " string,__FUNCTION__ , ##__VA_ARGS__)
+#if MAV_COURSE_NAVIGATION_VERBOSE
+#define VERBOSE_PRINT PRINT
+#else
+#define VERBOSE_PRINT(...)
+#endif
+
 int vv1;
 int vv2;
 int vv3;
@@ -27,6 +36,7 @@ int vv7;
 int vv8;
 int vv9;
 int vv10;
+
 
 /* 
  * Define global variables
