@@ -492,6 +492,7 @@
  */
 #ifndef ABI_FLOOR_DETECTION_ID
 #define ABI_FLOOR_DETECTION_ID 1
+#endif
 
 /* 
  * OBSTACLES message
