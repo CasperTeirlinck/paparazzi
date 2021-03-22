@@ -3,6 +3,20 @@
   <doc>
     <description>Obstacle detection based on floor colorfiltering.</description>
   </doc>
+
+  <settings>
+    <dl_settings>
+      <dl_settings NAME="FloorDetection">
+        <dl_setting var="floor_min.y" min="0" step="1" max="255" shortname="y_min" />
+        <dl_setting var="floor_max.y" min="0" step="1" max="255" shortname="y_max" />
+        <dl_setting var="floor_min.u"  min="0" step="1" max="255" shortname="u_min" />
+        <dl_setting var="floor_max.u"  min="0" step="1" max="255" shortname="u_max" />
+        <dl_setting var="floor_min.v"  min="0" step="1" max="255" shortname="v_min" />
+        <dl_setting var="floor_max.v"  min="0" step="1" max="255" shortname="v_max" />
+      </dl_settings>
+    </dl_settings>
+  </settings>
+
   <header>
     <file name="floor_detection.h"/>
   </header>

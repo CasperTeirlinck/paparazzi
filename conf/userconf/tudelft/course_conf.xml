@@ -49,7 +49,7 @@
   />
   <aircraft
    name="bebop_team3_cv"
-   ac_id="45"
+   ac_id="46"
    airframe="airframes/tudelft/team3_bebop_cv.xml"
    radio="radios/dummy.xml"
    telemetry="telemetry/default_rotorcraft.xml"
