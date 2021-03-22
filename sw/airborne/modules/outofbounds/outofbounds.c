@@ -39,6 +39,8 @@ struct image_t *camera_func(struct image_t *img)
 {
   result = findColor((char *) img->buf, img->w, img->h, FLOOR_DETECT_TYPE);
 
+  AbiSendMsgOUTOFBOUNDS(OUTOFBOUNDS_ID, result);
+
   return img;
 }
 

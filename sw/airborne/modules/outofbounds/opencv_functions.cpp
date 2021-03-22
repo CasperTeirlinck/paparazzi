@@ -119,11 +119,11 @@ float findColor(char *img, int w, int h, int color) {
 		}
 		Scalar lower(myColors[i][0], myColors[i][1], myColors[i][2]);
 		Scalar upper(myColors[i][3], myColors[i][4], myColors[i][5]);
-		print(lower);
+		// print(lower);
 		Mat mask;
 		inRange(M, lower, upper, mask);
 		danger[i] = getContours(mask, i, val, (float)w, (float)h);
 	}
-	cout << "Result: " << result << endl;
+	// cout << "Result: " << result << endl;
 	return result;
 }

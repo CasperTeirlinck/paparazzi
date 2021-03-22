@@ -71,6 +71,15 @@ static void edgebox_cb(uint8_t __attribute__((unused)) sender_id, struct obstacl
 //	printf(" \n");
 }
 
+#ifndef OUTOFBOUNDS_ID
+#define OUTOFBOUNDS_ID ABI_BROADCAST
+#endif
+static abi_event outofbounds_ev;
+static void outofbounds_cb(uint8_t __attribute__((unused)) sender_id, float relangle)
+{
+  
+}
+
 // ------------------------- ABI COMMUNICATION END-------------------------------------
 
 // ------------------------- NAVIGATION FUNCTIONS START-------------------------------------
@@ -207,6 +216,8 @@ void mav_course_navigation_init(void)
   AbiBindMsgFLOOR_DETECTION(ABI_FLOOR_DETECTION_ID, &floor_detection_ev, floor_detection_cb);
 
   AbiBindMsgOBSTACLES(EDGEBOX_ID, &edgebox_ev, edgebox_cb);
+
+  AbiBindMsgOUTOFBOUNDS(OUTOFBOUNDS_ID, &outofbounds_ev, outofbounds_cb);
 }
 
 /*
