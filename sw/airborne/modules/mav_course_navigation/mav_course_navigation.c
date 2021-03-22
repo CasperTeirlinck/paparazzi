@@ -40,7 +40,7 @@ int len_view, width_drone, center_view;
 float thresh_front, green_max;
 int flag_front, flag_heading, flag_go;
 
-int view_green[MT9F002_OUTPUT_HEIGHT], view_line[MT9F002_OUTPUT_HEIGHT], viewrange_comb[MT9F002_OUTPUT_HEIGHT];  // Setup empty array for combined view;
+int view_green[MT9F002_OUTPUT_HEIGHT], view_line[MT9F002_OUTPUT_HEIGHT], view_comb[MT9F002_OUTPUT_HEIGHT];  // Setup empty array for combined view;
 
 // ------------------------- NAVIGATION GLOBAL VARIABLES END-------------------------------------
 
@@ -84,14 +84,14 @@ static void edgebox_cb(uint8_t __attribute__((unused)) sender_id, struct obstacl
 static abi_event outofbounds_ev;
 static void outofbounds_cb(uint8_t __attribute__((unused)) sender_id, float relangle)
 {
-  
+
 }
 
 // ------------------------- ABI COMMUNICATION END-------------------------------------
 
 // ------------------------- NAVIGATION FUNCTIONS START-------------------------------------
 // Function used to merge the view-array received from line-detection and green-detection
-void view_combine(int viewrange_line[len_view], int viewrange_green[len_view]) {
+void view_combine() {
 
   // viewrange_line is the view-array from line-detection indicating an obstacle as [1] and no obstacle as [0]
   // viewrange_green is the view-array from green-detection indicating an obstacle as a [non-zero value] and no obstacle as [0]
@@ -101,8 +101,8 @@ void view_combine(int viewrange_line[len_view], int viewrange_green[len_view]) {
   int view_max = 0;                // Setup maximum depth seen by the drone
 
   for (int i = 0; i < len_viewrange; i++) { // Cycle through the green detection view to find maximum value
-    if (viewrange_green[i] > view_max) {
-      view_max = viewrange_green[i];
+    if (view_green[i] > view_max) {
+      view_max = view_green[i];
     }
   }
 
@@ -110,30 +110,30 @@ void view_combine(int viewrange_line[len_view], int viewrange_green[len_view]) {
 
   for (int i = 0; i < len_viewrange; i++) {  // Cycle through the view from green-detection and line-detection
 
-    if (viewrange_line[i]){             // If line-detection detected an obstacle in column i
+    if (view_line[i]){             // If line-detection detected an obstacle in column i
 
-      if (viewrange_green[i]) {         // If both line- and green-detection return obstacle for column i, take green-distance
-        viewrange_comb[i] = viewrange_green[i];
+      if (view_green[i]) {         // If both line- and green-detection return obstacle for column i, take green-distance
+        view_comb[i] = view_green[i];
       }
       else{                             // If only line-detection returns obstacle for column i, take absolute 0 for distance
-        viewrange_comb[i] = 0;
+        view_comb[i] = 0;
       }
 
     }
 
     else{                       // If line-detection does not return an obstacle in column i
-      if (!viewrange_green) {   // If green returns no obstacle in sight, take green max-distance
-        viewrange_comb[i] = view_max;
+      if (!view_green) {   // If green returns no obstacle in sight, take green max-distance
+        view_comb[i] = view_max;
       }
       else{
-      viewrange_comb[i] = viewrange_green[i]; // If green returns distance to obstacle, take green-distance
+      view_comb[i] = view_green[i]; // If green returns distance to obstacle, take green-distance
       }
 
     } // End of else
 
 
     if (i > (center_view-width_drone/2) && i < (center_view+width_drone/2)) { // If obstacle is in flight-path and too close, raise flag
-      if(viewrange_comb[i] < thresh_front){
+      if(view_comb[i] < thresh_front){
         flag_front = 1;
       }
     }
