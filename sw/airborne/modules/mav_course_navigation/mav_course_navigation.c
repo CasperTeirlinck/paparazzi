@@ -76,7 +76,7 @@ static void edgebox_cb(uint8_t __attribute__((unused)) sender_id, struct obstacl
 
 // ------------------------- NAVIGATION FUNCTIONS START-------------------------------------
 // Function used to merge the view-array received from line-detection and green-detection
-void view_combine(int viewrange_line[MT9F002_OUTPUT_HEIGHT], int viewrange_green[MT9F002_OUTPUT_HEIGHT]) {
+int view_combine(int viewrange_line[MT9F002_OUTPUT_HEIGHT], int viewrange_green[MT9F002_OUTPUT_HEIGHT]) {
 
   // viewrange_line is the view-array from line-detection indicating an obstacle as [1] and no obstacle as [0]
   // viewrange_green is the view-array from green-detection indicating an obstacle as a [non-zero value] and no obstacle as [0]
@@ -225,7 +225,7 @@ void mav_course_navigation_periodic(void)
   int angle_bottom = 10;
 
 
-  len_view = sizeof(view_green)/sizeof(view_green[0]);  // Compute range of viewfield resolution
+  len_view = MT9F002_OUTPUT_HEIGHT;   // sizeof(view_green)/sizeof(view_green[0]);  // Compute range of viewfield resolution
   width_drone = len_view*0.2;                           // Determine flightpath width, set at 20% of view
   center_view = len_view/2;                             // Determine center index of viewfield
 
