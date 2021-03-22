@@ -110,11 +110,11 @@ int c_bound_int(int num, int min, int max) {
 void c_ground_obstacle_detect(struct image_t *input, int bottom_count, int certainty, uint8_t y_m, uint8_t y_M, uint8_t u_m, uint8_t u_M, uint8_t v_m, uint8_t v_M) {
 
     int threat;
-    int obstacle_sector_array[10] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+//    int obstacle_sector_array[10] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
     /// you can change the variable name if you want!
     /// usage is something like this... detection_output.obstacle_vector[i] = 0;
-    struct FloorDetectionOutput detection_output;
+    struct FloorDetectionOutput obstacle_sector_array;
 
     //Go through all pixels in pairs. Note that by default, the frame is rotated 90deg CW.
     uint8_t *pixel = (uint8_t *) input->buf;    //First pixel, top left
@@ -122,6 +122,7 @@ void c_ground_obstacle_detect(struct image_t *input, int bottom_count, int certa
 
         //Reset the counter for the pixels out of the range.
         threat = 0;
+        obstacle_sector_array.obstacle_vector[i] = 0;
 
         for (uint16_t j = 0; j < input->w; j += 2) {
             //Check if the pixel pair is within the range
@@ -145,15 +146,15 @@ void c_ground_obstacle_detect(struct image_t *input, int bottom_count, int certa
             threat = c_bound_int(threat, 0, certainty);
 
             //If the number of pixels out of the range equal or exceed certainty, the column is unsafe.
-	        int idx = i * 10 / 520;
+//	        int idx = i * 10 / 520;
             if (threat == certainty) {
                 //In each sector keep track of only the closest obstacle.
                 // Obstacles located lower on the frame are assumed to be closer in space.
-		        if (obstacle_sector_array[idx] == 0 || obstacle_sector_array[idx] > j - certainty + 3){
-		            obstacle_sector_array[idx] = j - certainty + 3;     // +3 is necessary, in case obstacle at j=0: threat at j=0 will be 2, so certainty will be reached at j = certainty-2. We don't write 0 in the array (as 0 represents no obstacle), so instead write 1, so +3
-		        }
+                if (obstacle_sector_array.obstacle_vector[i] == 0 || obstacle_sector_array.obstacle_vector[i] > j - certainty + 3){
+                    obstacle_sector_array.obstacle_vector[i] = j - certainty + 3;     // +3 is necessary, in case obstacle at j=0: threat at j=0 will be 2, so certainty will be reached at j = certainty-2. We don't write 0 in the array (as 0 represents no obstacle), so instead write 1, so +3
+                }
             } else if (threat == 0) {
-	        obstacle_sector_array[idx] = 0;
+                obstacle_sector_array.obstacle_vector[i] = 0;
             }
 
             pixel += 4; //Go to the next pixel pair.
@@ -167,7 +168,7 @@ void c_ground_obstacle_detect(struct image_t *input, int bottom_count, int certa
 //    printf("\n");
 
     // publish the result via Abi.
-    AbiSendMsgFLOOR_DETECTION(ABI_FLOOR_DETECTION_ID, detection_output);
+    AbiSendMsgFLOOR_DETECTION(ABI_FLOOR_DETECTION_ID, obstacle_sector_array);
 
 
     //publish the result via Abi. Passing 10 int is a stupid way but safe haha

@@ -17,6 +17,7 @@
 #include <stdio.h>
 #include <time.h>
 #include "modules/mav_course_edges/mav_course_edges.h"
+#include "modules/mav_course_exercise/floor_detection.h"
 
 #define MAV_COURSE_NAVIGATION_VERBOSE TRUE
 
@@ -64,22 +65,11 @@ float velocity;
 #define ABI_FLOOR_DETECTION_ID ABI_BROADCAST
 #endif
 static abi_event floor_detection_ev;
-static void floor_detection_cb(uint8_t __attribute__((unused)) sender_id,
-                               int v1, int v2, int v3, int v4, int v5, int v6, int v7, int v8, int v9, int v10)
+static void floor_detection_cb(uint8_t __attribute__((unused)) sender_id, struct FloorDetectionOutput very_nice_output)
 {
-  //    I checked it working well!
-      printf("%d, %d, %d, %d, %d, %d, %d, %d, %d, %d\n", v1,v2,v3,v4,v5,v6,v7,v8,v9,v10);
-  //
-  vv1 = v1;
-  vv2 = v2;
-  vv3 = v3;
-  vv4 = v4;
-  vv5 = v5;
-  vv6 = v6;
-  vv7 = v7;
-  vv8 = v8;
-  vv9 = v9;
-  vv10 = v10;
+//    for (int i=0;i<520;i++){
+//        printf("%d, %d, \n", i, very_nice_output.obstacle_vector[i]);
+//    }
 }
 
 #ifndef EDGEBOX_ID
@@ -88,11 +78,11 @@ static void floor_detection_cb(uint8_t __attribute__((unused)) sender_id,
 static abi_event edgebox_ev;
 static void edgebox_cb(uint8_t __attribute__((unused)) sender_id, struct obstacles_t obstacles)
 {
-	printf("edgebox: ");
-  for (int i = 0; i < MT9F002_OUTPUT_HEIGHT; i++) {
-		printf("%d", obstacles.x[i]);
-  }
-	printf(" \n");
+//	printf("edgebox: ");
+//  for (int i = 0; i < MT9F002_OUTPUT_HEIGHT; i++) {
+//		printf("%d", obstacles.x[i]);
+//  }
+//	printf(" \n");
 }
 
 /*
