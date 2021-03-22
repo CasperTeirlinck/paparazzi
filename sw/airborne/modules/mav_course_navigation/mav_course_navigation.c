@@ -258,7 +258,7 @@ void mav_course_navigation_periodic(void)
   float headingchange, velocity;
 
 
-  view_combine(view_line, view_green);   // Combine received view-analyses using view_combine function
+  view_combine();   // Combine received view-analyses using view_combine function
 
   if (flag_front || flag_bottom) {  // If an error flag is triggered for either too-close object or out-of-bounds state
 
@@ -273,7 +273,7 @@ void mav_course_navigation_periodic(void)
   }
 
 
-  heading = triangle(view_comb);  // Evaluate headings to find optimal heading of drone
+  heading = triangle();  // Evaluate headings to find optimal heading of drone
 
   if (flag_heading) {  // If heading error is flagged meaning no possible heading is found
 
