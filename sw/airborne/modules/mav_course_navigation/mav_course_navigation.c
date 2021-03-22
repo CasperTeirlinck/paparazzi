@@ -84,7 +84,7 @@ void view_combine(int viewrange_line[MT9F002_OUTPUT_HEIGHT], int viewrange_green
   int len_viewrange = len_view;       // Take length of viewfield
   int viewrange_comb[len_viewrange];  // Setup empty array for combined view
   int flag_front = 0;                 // Setup flag for if an obstruction is detected in the flightpath of the drone
-  float view_max = 0.;                // Setup maximum depth seen by the drone
+  int view_max = 0;                // Setup maximum depth seen by the drone
 
   for (int i = 0; i < len_viewrange; i++) { // Cycle through the green detection view to find maximum value
     if (viewrange_green[i] > view_max) {
@@ -234,7 +234,7 @@ void mav_course_navigation_periodic(void)
   flag_heading = 1;   // Initialize flag for heading, only nullified when optimal heading within range is found
   flag_go = 1;        // Initialize flag for go-command, only nullified when optimal in-bound heading is found
 
-  float view_comb;  //[len_view]              // Initialize combined view-array
+  int view_comb;  //[len_view]              // Initialize combined view-array
 
   float len_view_float = (float)len_view;   // Initialize datatype-change variable
   float dy_ind, dy;         // Initialize index-difference between
