@@ -1,4 +1,8 @@
 /**
+ * This file is to test the opencv implementations on the given dataset without running paparazzi
+ * ! Dont forget to set USEDATASET to 1 in opencv_function.cpp and opencv_function.h !
+ */
+/**
  * @file "modules/mav_course_edges/test.h"
  * @author Group 3 MAV course 2021
  */
