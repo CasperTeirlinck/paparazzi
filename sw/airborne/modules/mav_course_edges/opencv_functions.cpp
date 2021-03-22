@@ -18,7 +18,7 @@ using namespace std;
 using namespace cv;
 
 // When using thet dataset images instead of the camera feed
-#define USEDATASET 1
+#define USEDATASET 0
 
 #if !USEDATASET
 // include for acceccing the module settings

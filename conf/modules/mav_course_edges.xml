@@ -26,7 +26,7 @@
     <file name="mav_course_edges.h"/>
   </header>
   <init fun="mav_course_edges_init()"/>
-  <!-- <periodic fun="mav_course_edges_periodic()" freq="4" autorun="TRUE"/> -->
+  <periodic fun="mav_course_edges_periodic()" freq="4" autorun="TRUE"/>
   <makefile target="ap">
     <file name="mav_course_edges.c"/>
 

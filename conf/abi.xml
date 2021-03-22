@@ -205,7 +205,7 @@
     </message>
 
     <message name="OBSTACLES" id="29">
-      <field name="obstacles" type="int">Array indexed over frame width indicating if an obstacle exists or not</field>
+      <field name="obstacles" type="int *">Array indexed over frame width indicating if an obstacle exists or not</field>
     </message>
 
   </msg_class>
