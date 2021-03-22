@@ -28,17 +28,17 @@
 #define NAV_C // needed to get the nav functions like Inside...
 #include "generated/flight_plan.h"
 
-#define PRINT(string,...) fprintf(stderr, "[mav_exercise->%s()] " string,__FUNCTION__ , ##__VA_ARGS__)
+#define PRINT(string, ...) fprintf(stderr, "[mav_exercise->%s()] " string,__FUNCTION__ , ##__VA_ARGS__)
 
 uint8_t increase_nav_heading(float incrementDegrees);
 uint8_t moveWaypointForward(uint8_t waypoint, float distanceMeters);
 uint8_t moveWaypoint(uint8_t waypoint, struct EnuCoor_i *new_coor);
 
 enum navigation_state_t {
-    SAFE,
-    OBSTACLE_FOUND,
-    OUT_OF_BOUNDS,
-    HOLD
+  SAFE,
+  OBSTACLE_FOUND,
+  OUT_OF_BOUNDS,
+  HOLD
 };
 
 // define and initialise global variables
@@ -50,6 +50,16 @@ float moveDistance = 2;                 // waypoint displacement [m]
 float oob_haeding_increment = 5.f;      // heading angle increment if out of bounds [deg]
 const int16_t max_trajectory_confidence = 5; // number of consecutive negative object detections to be sure we are obstacle free
 
+#ifndef DIV_TRESHOLD
+#define DIV_TRESHOLD 0.3f
+#endif
+float div_threshold = DIV_TRESHOLD; // optic flow divergence size for object detection
+float div_size = 0; // optic flow divergence size for object detection
+
+#ifndef HDG_CHANGE
+#define HDG_CHANGE 20.f
+#endif
+float hdg_change = HDG_CHANGE; // heading change if OBSTACLE_FOUND
 
 // needed to receive output from a separate module running on a parallel process
 #ifndef ORANGE_AVOIDER_VISUAL_DETECTION_ID
@@ -58,16 +68,33 @@ const int16_t max_trajectory_confidence = 5; // number of consecutive negative o
 static abi_event color_detection_ev;
 static void color_detection_cb(uint8_t __attribute__((unused)) sender_id,
                                int16_t __attribute__((unused)) pixel_x, int16_t __attribute__((unused)) pixel_y,
-                               int16_t __attribute__((unused)) pixel_width, int16_t __attribute__((unused)) pixel_height,
-                               int32_t quality, int16_t __attribute__((unused)) extra)
+                               int16_t __attribute__((unused)) pixel_width,
+                               int16_t __attribute__((unused)) pixel_height,
+                               int32_t quality, int16_t __attribute__((unused)) extra) {
+  color_count = quality;
+}
+
+// also subscribe to the cv optic flow abi
+#ifndef FLOW_OPTICFLOW_ID
+#define FLOW_OPTICFLOW_ID ABI_BROADCAST
+#endif
+static abi_event optic_flow_ev;
+static void optic_flow_cb(
+    uint8_t __attribute__((unused)) sender_id, uint32_t __attribute__((unused)) stamp,
+    int16_t __attribute__((unused)) flow_x, int16_t __attribute__((unused)) flow_y,
+    int16_t __attribute__((unused)) flow_der_x, int16_t __attribute__((unused)) flow_der_y,
+    float __attribute__((unused)) quality, float size_divergence)
 {
-    color_count = quality;
+    div_size = size_divergence;
 }
 
 void mav_exercise_init(void)
 {
     // bind our colorfilter callbacks to receive the color filter outputs
     AbiBindMsgVISUAL_DETECTION(ORANGE_AVOIDER_VISUAL_DETECTION_ID, &color_detection_ev, color_detection_cb);
+
+    // bind the optic flow divergence to the cv optic flow module
+    AbiBindMsgOPTICAL_FLOW(FLOW_OPTICFLOW_ID, &optic_flow_ev, optic_flow_cb);
 }
 
 void mav_exercise_periodic(void)
@@ -81,7 +108,10 @@ void mav_exercise_periodic(void)
     // front_camera defined in airframe xml, with the video_capture module
     int32_t color_count_threshold = oa_color_count_frac * front_camera.output_size.w * front_camera.output_size.h;
 
-    PRINT("Color_count: %d  threshold: %d state: %d \n", color_count, color_count_threshold, navigation_state);
+    // PRINT("Color_count: %d  threshold: %d state: %d \n", color_count, color_count_threshold, navigation_state);
+
+    PRINT("divergence = %.2f state: %d \n", div_size, navigation_state);
+
 
     // update our safe confidence using color threshold
     if(color_count < color_count_threshold){
@@ -98,7 +128,10 @@ void mav_exercise_periodic(void)
             moveWaypointForward(WP_TRAJECTORY, 1.5f * moveDistance);
             if (!InsideObstacleZone(WaypointX(WP_TRAJECTORY),WaypointY(WP_TRAJECTORY))) {
                 navigation_state = OUT_OF_BOUNDS;
-            } else if (obstacle_free_confidence == 0) {
+            // } else if (obstacle_free_confidence == 0) {
+                // navigation_state = OBSTACLE_FOUND;
+            } else if (div_size > div_threshold) {
+                // use optic flow to determine if an obstacle has been found  
                 navigation_state = OBSTACLE_FOUND;
             } else {
                 moveWaypointForward(WP_GOAL, moveDistance);
@@ -127,6 +160,9 @@ void mav_exercise_periodic(void)
             }
             break;
         case HOLD:
+            increase_nav_heading(hdg_change);
+            navigation_state = SAFE;
+            break;
         default:
             break;
     }
@@ -135,48 +171,44 @@ void mav_exercise_periodic(void)
 /*
  * Increases the NAV heading. Assumes heading is an INT32_ANGLE. It is bound in this function.
  */
-uint8_t increase_nav_heading(float incrementDegrees)
-{
-    float new_heading = stateGetNedToBodyEulers_f()->psi + RadOfDeg(incrementDegrees);
+uint8_t increase_nav_heading(float incrementDegrees) {
+  float new_heading = stateGetNedToBodyEulers_f()->psi + RadOfDeg(incrementDegrees);
 
-    // normalize heading to [-pi, pi]
-    FLOAT_ANGLE_NORMALIZE(new_heading);
+  // normalize heading to [-pi, pi]
+  FLOAT_ANGLE_NORMALIZE(new_heading);
 
-    // set heading
-    nav_heading = ANGLE_BFP_OF_REAL(new_heading);
+  // set heading
+  nav_heading = ANGLE_BFP_OF_REAL(new_heading);
 
-    return false;
+  return false;
 }
 
 /*
  * Calculates coordinates of a distance of 'distanceMeters' forward w.r.t. current position and heading
  */
-static uint8_t calculateForwards(struct EnuCoor_i *new_coor, float distanceMeters)
-{
-    float heading  = stateGetNedToBodyEulers_f()->psi;
+static uint8_t calculateForwards(struct EnuCoor_i *new_coor, float distanceMeters) {
+  float heading = stateGetNedToBodyEulers_f()->psi;
 
-    // Now determine where to place the waypoint you want to go to
-    new_coor->x = stateGetPositionEnu_i()->x + POS_BFP_OF_REAL(sinf(heading) * (distanceMeters));
-    new_coor->y = stateGetPositionEnu_i()->y + POS_BFP_OF_REAL(cosf(heading) * (distanceMeters));
-    return false;
+  // Now determine where to place the waypoint you want to go to
+  new_coor->x = stateGetPositionEnu_i()->x + POS_BFP_OF_REAL(sinf(heading) * (distanceMeters));
+  new_coor->y = stateGetPositionEnu_i()->y + POS_BFP_OF_REAL(cosf(heading) * (distanceMeters));
+  return false;
 }
 
 /*
  * Sets waypoint 'waypoint' to the coordinates of 'new_coor'
  */
-uint8_t moveWaypoint(uint8_t waypoint, struct EnuCoor_i *new_coor)
-{
-    waypoint_move_xy_i(waypoint, new_coor->x, new_coor->y);
-    return false;
+uint8_t moveWaypoint(uint8_t waypoint, struct EnuCoor_i *new_coor) {
+  waypoint_move_xy_i(waypoint, new_coor->x, new_coor->y);
+  return false;
 }
 
 /*
  * Calculates coordinates of distance forward and sets waypoint 'waypoint' to those coordinates
  */
-uint8_t moveWaypointForward(uint8_t waypoint, float distanceMeters)
-{
-    struct EnuCoor_i new_coor;
-    calculateForwards(&new_coor, distanceMeters);
-    moveWaypoint(waypoint, &new_coor);
-    return false;
+uint8_t moveWaypointForward(uint8_t waypoint, float distanceMeters) {
+  struct EnuCoor_i new_coor;
+  calculateForwards(&new_coor, distanceMeters);
+  moveWaypoint(waypoint, &new_coor);
+  return false;
 }

@@ -53,10 +53,10 @@ enum navigation_state_t {
 };
 
 // define settings
-float oag_color_count_frac = 0.18f;       // obstacle detection threshold as a fraction of total of image
+float oag_color_count_frac = 0.18f;       //roelof 0.18f// obstacle detection threshold as a fraction of total of image
 float oag_floor_count_frac = 0.05f;       // floor detection threshold as a fraction of total of image
 float oag_max_speed = 0.5f;               // max flight speed [m/s]
-float oag_heading_rate = RadOfDeg(20.f);  // heading change setpoint for avoidance [rad/s]
+float oag_heading_rate = RadOfDeg(12.f);  // roelof heading change setpoint for avoidance [rad/s]
 
 // define and initialise global variables
 enum navigation_state_t navigation_state = SEARCH_FOR_SAFE_HEADING;   // current state in state machine
@@ -66,7 +66,7 @@ int32_t floor_centroid = 0;             // floor detector centroid in y directio
 float avoidance_heading_direction = 0;  // heading change direction for avoidance [rad/s]
 int16_t obstacle_free_confidence = 0;   // a measure of how certain we are that the way ahead if safe.
 
-const int16_t max_trajectory_confidence = 5;  // number of consecutive negative object detections to be sure we are obstacle free
+const int16_t max_trajectory_confidence = 3;  //roelof 5 // number of consecutive negative object detections to be sure we are obstacle free
 
 // This call back will be used to receive the color count from the orange detector
 #ifndef ORANGE_AVOIDER_VISUAL_DETECTION_ID
@@ -130,6 +130,7 @@ void orange_avoider_guided_periodic(void)
   VERBOSE_PRINT("Color_count: %d  threshold: %d state: %d \n", color_count, color_count_threshold, navigation_state);
   VERBOSE_PRINT("Floor count: %d, threshold: %d\n", floor_count, floor_count_threshold);
   VERBOSE_PRINT("Floor centroid: %f\n", floor_centroid_frac);
+  VERBOSE_PRINT("obstacle_free_confidence : %d\n", obstacle_free_confidence);
 
   // update our safe confidence using color threshold
   if(color_count < color_count_threshold){
@@ -150,13 +151,16 @@ void orange_avoider_guided_periodic(void)
       } else if (obstacle_free_confidence == 0){
         navigation_state = OBSTACLE_FOUND;
       } else {
+    	  guidance_h_set_guided_heading(-floor_centroid_frac*RadOfDeg(54.f) + stateGetNedToBodyEulers_f()->psi);
         guidance_h_set_guided_body_vel(speed_sp, 0);
+        VERBOSE_PRINT("Changing heading by: %f\n", -floor_centroid_frac*RadOfDeg(54.f));
+
       }
 
       break;
     case OBSTACLE_FOUND:
       // stop
-      guidance_h_set_guided_body_vel(0, 0);
+      //guidance_h_set_guided_body_vel(0, 0);//roelof
 
       // randomly select new search direction
       chooseRandomIncrementAvoidance();
@@ -165,10 +169,11 @@ void orange_avoider_guided_periodic(void)
 
       break;
     case SEARCH_FOR_SAFE_HEADING:
-      guidance_h_set_guided_heading_rate(avoidance_heading_direction * oag_heading_rate);
+
+      guidance_h_set_guided_heading_rate(2*avoidance_heading_direction * oag_heading_rate);
 
       // make sure we have a couple of good readings before declaring the way safe
-      if (obstacle_free_confidence >= 2){
+      if (obstacle_free_confidence >= 1){//2 roelof
         guidance_h_set_guided_heading(stateGetNedToBodyEulers_f()->psi);
         navigation_state = SAFE;
       }
@@ -176,6 +181,9 @@ void orange_avoider_guided_periodic(void)
     case OUT_OF_BOUNDS:
       // stop
       guidance_h_set_guided_body_vel(0, 0);
+
+      chooseRandomIncrementAvoidance();
+      guidance_h_set_guided_heading(avoidance_heading_direction*RadOfDeg(90.f)+ stateGetNedToBodyEulers_f()->psi);
 
       // start turn back into arena
       guidance_h_set_guided_heading_rate(avoidance_heading_direction * RadOfDeg(15));
@@ -185,7 +193,8 @@ void orange_avoider_guided_periodic(void)
       break;
     case REENTER_ARENA:
       // force floor center to opposite side of turn to head back into arena
-      if (floor_count >= floor_count_threshold && avoidance_heading_direction * floor_centroid_frac >= 0.f){
+    if (!(floor_count < floor_count_threshold || fabsf(floor_centroid_frac) > 0.12)){
+      //roelof if (floor_count >= floor_count_threshold && avoidance_heading_direction * floor_centroid_frac >= 0.f){
         // return to heading mode
         guidance_h_set_guided_heading(stateGetNedToBodyEulers_f()->psi);
 
@@ -208,7 +217,7 @@ void orange_avoider_guided_periodic(void)
 uint8_t chooseRandomIncrementAvoidance(void)
 {
   // Randomly choose CW or CCW avoiding direction
-  if (rand() % 2 == 0) {
+  if (floor_centroid<0){//(rand() % 2 == 0) {
     avoidance_heading_direction = 1.f;
     VERBOSE_PRINT("Set avoidance increment to: %f\n", avoidance_heading_direction * oag_heading_rate);
   } else {

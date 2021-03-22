@@ -24,4 +24,8 @@
 extern void mav_exercise_init(void);
 extern void mav_exercise_periodic(void);
 
+// Settings for simple obstacle detection and avoidance
+extern float div_threshold;
+extern float hdg_change;
+
 #endif //PAPARAZZI_MAV_EXERCISE_H

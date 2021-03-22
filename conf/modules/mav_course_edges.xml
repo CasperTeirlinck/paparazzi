@@ -1,0 +1,49 @@
+<!DOCTYPE module SYSTEM "module.dtd">
+
+<module name="mav_course_edges">
+  <doc>
+    <description>
+    This module is for the course AE4317 Autonomous Flight of Micro Air Vehicles at the TU Delft.
+    This module uses edge detection to detect and avoid obstacles.
+    </description>
+  </doc>
+
+  <settings>
+    <dl_settings>
+      <dl_settings name="EdgeBox">
+         <dl_setting var="eb_hor_thresh" min="0" step="0.05" max="1"/>
+         <dl_setting var="eb_blur_size" min="0" step="1" max="50"/>
+         <dl_setting var="eb_canny_thresh_1" min="0" step="1" max="255"/>
+         <dl_setting var="eb_canny_thresh_2" min="0" step="1" max="255"/>
+         <dl_setting var="eb_size_thresh" min="0" step="1" max="100"/>
+         <dl_setting var="eb_diff_thresh" min="0" step="1" max="500"/>
+         <dl_setting var="show_debug" min="0" step="1" max="1" values="Off|On"/>
+      </dl_settings>
+    </dl_settings>
+  </settings>
+  
+  <header>
+    <file name="mav_course_edges.h"/>
+  </header>
+  <init fun="mav_course_edges_init()"/>
+  <makefile target="ap">
+    <file name="mav_course_edges.c"/>
+
+    <file name="opencv_functions.cpp"/>
+    <file name="opencv_image_functions.cpp" dir="modules/computer_vision"/>
+
+    <flag name="CXXFLAGS" value="I$(PAPARAZZI_SRC)/sw/ext/opencv_bebop/install_arm/include"/>
+    <flag name="LDFLAGS" value="-L$(PAPARAZZI_HOME)/sw/ext/opencv_bebop/install_arm/lib -lopencv_world -L$(PAPARAZZI_HOME)/sw/ext/opencv_bebop/install_arm/share/OpenCV/3rdparty/lib -llibprotobuf -llibjpeg-turbo -llibpng -llibtiff -lzlib -lquirc -ltegra_hal -ldl -lm -lpthread -lrt"/>
+
+  </makefile>
+  <makefile target="nps">
+    <file name="mav_course_edges.c"/>
+
+    <file name="opencv_functions.cpp"/>
+    <file name="opencv_image_functions.cpp" dir="modules/computer_vision"/>
+
+    <flag name="CXXFLAGS" value="I$(PAPARAZZI_SRC)/sw/ext/opencv_bebop/install_pc/include"/>
+    <flag name="LDFLAGS" value="L$(PAPARAZZI_SRC)/sw/ext/opencv_bebop/install_pc/lib -lopencv_world -L$(PAPARAZZI_SRC)/sw/ext/opencv_bebop/install_pc/share/OpenCV/3rdparty/lib -llibprotobuf -lquirc -L/usr/lib/x86_64-linux-gnu -ljpeg -lpng -ltiff -ldc1394 -L/usr/lib/x86_64-linux-gnu/hdf5/serial -lhdf5 -lpthread -lsz -lz -ldl -lm -lfreetype -lharfbuzz -lrt"/>
+
+  </makefile>
+</module>

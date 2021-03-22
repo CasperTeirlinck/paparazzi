@@ -1,0 +1,18 @@
+<!DOCTYPE module SYSTEM "module.dtd">
+
+<module name="mav_course_navigation">
+  <doc>
+    <description>
+
+    </description>
+  </doc>
+  
+  <header>
+    <file name="mav_course_navigation.h"/>
+  </header>
+  <init fun="mav_course_navigation_init()"/>
+  <periodic fun="mav_course_navigation_periodic()" freq="4"/>
+  <makefile target="ap|nps">
+    <file name="mav_course_navigation.c"/>
+  </makefile>
+</module>
