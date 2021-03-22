@@ -21,6 +21,8 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <time.h>
+#include <sys/types.h>
+#include <pwd.h>
 
 // Import custom opencv functions
 #include "modules/mav_course_edges/opencv_functions.h"
@@ -79,7 +81,7 @@ int obstacles[MT9F002_OUTPUT_HEIGHT] = {0};
 void mav_course_edges_init(void)
 {
   // Set frame output save path
-  sprintf(save_dir, "/home/casper/paparazzi/prototyping/paparazzi_capture");
+  sprintf(save_dir, "%s/edgebox_capture", STRINGIFY(VIDEO_CAPTURE_PATH));
 
   // Attach callback function to the front camera for obstacle avoidance
   cv_add_to_device(&front_camera, camera_cb, 0);
@@ -96,8 +98,6 @@ struct image_t *camera_cb(struct image_t *img)
 {
   // get obstacles from opencv implementation
   get_obstacles_edgebox((char *) img->buf, img->w, img->h, obstacles, show_debug);
-
-  // AbiSendMsgOBSTACLES(EDGEBOX_ID, obstacles);
 
   return img;
 }
