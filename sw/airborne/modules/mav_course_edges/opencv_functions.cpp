@@ -18,7 +18,7 @@ using namespace std;
 using namespace cv;
 
 // When using thet dataset images instead of the camera feed
-#define USEDATASET 0
+#define USEDATASET 1
 
 #if !USEDATASET
 // include for acceccing the module settings
@@ -29,15 +29,18 @@ using namespace cv;
 
 // Define functions
 #if !USEDATASET
-void get_obstacles_edgebox(char *img, int w, int h, int show_debug);
+void get_obstacles_edgebox(char *img, int w, int h, int *obstacles, int show_debug);
 #else
-Mat get_obstacles_edgebox(Mat img, int w, int h);
+Mat get_obstacles_edgebox(Mat img, int w, int h, int *obstacles, int show_debug);
 #endif
 
+/* 
+ * Function to process frame with OpenCV and detect/calculate obstacle positions
+ */
 #if !USEDATASET
-void get_obstacles_edgebox(char *img, int w, int h, int show_debug) {
+void get_obstacles_edgebox(char *img, int w, int h, int *obstacles, int show_debug) {
 #else
-Mat get_obstacles_edgebox(Mat img, int w, int h) {
+Mat get_obstacles_edgebox(Mat img, int w, int h, int *obstacles, int show_debug) {
 #endif
 
   // Transform image buffer into an OpenCV YUV422 Mat
@@ -67,9 +70,8 @@ Mat get_obstacles_edgebox(Mat img, int w, int h) {
 
   // Get rid of the noise by blurring
   medianBlur(image_blur, image_blur, eb_blur_size);
-  // GaussianBlur(image_gray, image_gray, Size(5, 5), 0);
 
-  // using canny to detect the edges of the images
+  // Using canny to detect the edges of the images
   Mat image_canny;
   Canny(image_blur, image_canny, eb_canny_thresh_1, eb_canny_thresh_2 );
 
@@ -77,7 +79,7 @@ Mat get_obstacles_edgebox(Mat img, int w, int h) {
   vector<vector<Point>> contours;
   findContours(image_canny, contours, RETR_TREE, CHAIN_APPROX_SIMPLE);
 
-  // Getting and filtering the bounding boxes
+  // Defining bounding boxes variablse
   vector<Rect> boundRect(contours.size());
   Mat boundRect_img;
   int boundRect_area;
@@ -85,10 +87,15 @@ Mat get_obstacles_edgebox(Mat img, int w, int h) {
   Mat boundRect_diff_;
   int boundRect_diff;
 
-  vector<Rect> boundRect_obst;
+  // Clear obstacles array
+  for (int i = 0; i < h; i++) {
+    *(obstacles + i) = 0;
+  }
 
+  // Getting and filtering the bounding boxes
   for(size_t i = 0; i < contours.size(); i++)
   {
+    // get bounding box
     boundRect[i] = boundingRect(contours[i]);
     
     // get texture
@@ -100,67 +107,54 @@ Mat get_obstacles_edgebox(Mat img, int w, int h) {
   
     // filter boxes
     if (
+      // filter on size
       ((float)boundRect_area >= (eb_size_thresh/10000.f)*(w*h)) && 
+      // filter on texture
       (boundRect_diff < eb_diff_thresh) &&
+      // filter on horizontal position
       ((boundRect[i].x + (boundRect[i].width)/2) > eb_hor_thresh*w)
       )
     {
-      boundRect_obst.insert(boundRect_obst.end(), boundRect[i]);
-      
+      // fill obstacles array
+      int indexer_begin = boundRect[i].y;
+      int indexer_end = (boundRect[i].y + boundRect[i].height ) ;
+      for (int j = indexer_begin; j < (indexer_end + 1); j++)
+      {
+        *(obstacles + j) = 1;
+      }
+
+      // show box
+      if (show_debug) {
+        rectangle(image, boundRect[i].tl(), boundRect[i].br(), Scalar(0, 0, 255), 2);
+        // This shows the lines of the centers of the bounding boxes
+        // Point point1 = Point(0.4*w, 0);
+        // Point point2 = Point(0.4*w, h);
+        // Point point3 = Point((boundRect[i].x + (boundRect[i].width)/2), 0);
+        // Point point4 = Point((boundRect[i].x + (boundRect[i].width)/2), h);
+        // This shows the horizontal filter line
+        // line(image, point1, point2, Scalar(0,0,255), 1);
+        // line(image, point3, point4, Scalar(255,0,0), 2);
+      }
     }
-
   }
 
-  int obstacle[520];
-  for (int i = 0; i < 520; i++)
-  {
-    obstacle[i] = 0;
-    // cout << obstacle[i] << endl;
-  }
-  
-  //  Prepare Draw output
-  for(size_t i = 0; i< boundRect_obst.size(); i++)
-  {
-    // Below this the obstacles will be put into an array
-    // cout << "Boundary of box left begin: " << boundRect_obst[i].y << endl;
-    // cout << "Boundary of box width : "<< boundRect_obst[i].height << endl;
-    // cout << "Boundary of box right end : "<< (boundRect_obst[i].y + boundRect[i].height) << endl;
-    // CASPER we need to write something in the style of if boundRect_obst = true then
-    // boundRect_obst[i].y = 1 
-    
-    int indexer_begin = boundRect_obst[i].y;
-    int indexer_end = (boundRect_obst[i].y + boundRect_obst[i].height ) ;
-
-    for (int j = indexer_begin; j < (indexer_end + 1); j++)
-    {
-      obstacle[j] = 1;
-      // cout << obstacle[j];
+  // Show obstacles array
+  if (show_debug) {
+    for (int y = 0; y < h; y++) {
+      for (int x = 0; x < 20; x++) {
+        Vec3b & color = image.at<Vec3b>(y, x);
+        if (*(obstacles + y)) {
+          color[0] = 0;
+          color[1] = 0;
+          color[2] = 255;
+        } else {
+          color[0] = 0;
+          color[1] = 0;
+          color[2] = 0;
+        }
+      }
     }
-  
-
-    // everything below this is for drawing the boxes and lines on the figures for testing
-    
-    // This picks random color, change this to only red
-    Scalar color = Scalar(0, 0, 255); 
-    // This draws the rectangle
-    rectangle(image, boundRect_obst[i].tl(), boundRect_obst[i].br(), color, 2);
-    // Point point1 = Point(0.4*w, 0);
-    // Point point2 = Point(0.4*w, h);
-    // This shows the lines of the centers of the bounding boxes
-    // Point point3 = Point((boundRect_obst[i].x + (boundRect_obst[i].width)/2), 0);
-    // Point point4 = Point((boundRect_obst[i].x + (boundRect_obst[i].width)/2),h);
-    // This shows the horizontal filter line
-    // line(image, point1, point2, Scalar(0,0,255), 1);
-    // line(image, point3, point4, Scalar(255,0,0), 2);
   }
-  
-  // for (int k =0; k < 520; k++)
-  // {
-  //   cout << obstacle[k]; 
-  // }
-
-  // cout << "   " << endl; 
-  // cout << "   " << endl; 
 
   #if !USEDATASET
   // Convert image back to YUV422 and replace the frame buffer when debugging

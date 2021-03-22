@@ -9,6 +9,7 @@
  */
 
 #include "modules/mav_course_edges/mav_course_edges.h"
+#include "subsystems/abi.h"
 #include "firmwares/rotorcraft/navigation.h"
 #include "generated/airframe.h"
 #include "state.h"
@@ -88,7 +89,7 @@ static char save_dir[256];
 #ifndef MT9F002_OUTPUT_HEIGHT
 #define MT9F002_OUTPUT_HEIGHT 520
 #endif
-int obstacles[MT9F002_OUTPUT_HEIGHT];
+int obstacles[MT9F002_OUTPUT_HEIGHT] = {0};
 
 /*
  * Initialisation function
@@ -111,7 +112,10 @@ void mav_course_edges_init(void)
  */
 struct image_t *camera_cb(struct image_t *img)
 {
-  get_obstacles_edgebox((char *) img->buf, img->w, img->h, show_debug);
+  // get obstacles from opencv implementation
+  get_obstacles_edgebox((char *) img->buf, img->w, img->h, &obstacles, show_debug);
+
+  AbiSendMsgOBSTACLES(EDGEBOX_ID, obstacles);
 
   return img;
 }
@@ -130,110 +134,110 @@ struct image_t *video_capture_cb(struct image_t *img)
   return NULL;
 }
 
-/*
- * Function that checks it is safe to move forwards, and then moves a waypoint forward or changes the heading
- */
-void mav_course_edges_periodic(void)
-{
-  // only evaluate our state machine if we are flying
-  if(!autopilot_in_flight()){
-    return;
-  }
+// /*
+//  * Function that checks it is safe to move forwards, and then moves a waypoint forward or changes the heading
+//  */
+// void mav_course_edges_periodic(void)
+// {
+//   // only evaluate our state machine if we are flying
+//   if(!autopilot_in_flight()){
+//     return;
+//   }
 
-  switch (navigation_state){
-    case SAFE:
-      // Move waypoint forward
-      moveWaypointForward(WP_TRAJECTORY, 1.5f * moveDistance);
-      // Check:
-      if (!InsideObstacleZone(WaypointX(WP_TRAJECTORY),WaypointY(WP_TRAJECTORY))){
-        navigation_state = OUT_OF_BOUNDS;
-      } else {
-        moveWaypointForward(WP_GOAL, moveDistance);
-      }
-      break;
-    case OBSTACLE_FOUND:
-      // stop
-      waypoint_move_here_2d(WP_GOAL);
-      waypoint_move_here_2d(WP_TRAJECTORY);
+//   switch (navigation_state){
+//     case SAFE:
+//       // Move waypoint forward
+//       moveWaypointForward(WP_TRAJECTORY, 1.5f * moveDistance);
+//       // Check:
+//       if (!InsideObstacleZone(WaypointX(WP_TRAJECTORY),WaypointY(WP_TRAJECTORY))){
+//         navigation_state = OUT_OF_BOUNDS;
+//       } else {
+//         moveWaypointForward(WP_GOAL, moveDistance);
+//       }
+//       break;
+//     case OBSTACLE_FOUND:
+//       // stop
+//       waypoint_move_here_2d(WP_GOAL);
+//       waypoint_move_here_2d(WP_TRAJECTORY);
 
-      // navigation_state = SEARCH_FOR_SAFE_HEADING;
+//       // navigation_state = SEARCH_FOR_SAFE_HEADING;
 
-      break;
-    case SEARCH_FOR_SAFE_HEADING:
-      increase_nav_heading(heading_increment);
+//       break;
+//     case SEARCH_FOR_SAFE_HEADING:
+//       increase_nav_heading(heading_increment);
 
-      navigation_state = SAFE;
-      break;
-    case OUT_OF_BOUNDS:
-      // stop
-      waypoint_move_here_2d(WP_GOAL);
-      waypoint_move_here_2d(WP_TRAJECTORY);
+//       navigation_state = SAFE;
+//       break;
+//     case OUT_OF_BOUNDS:
+//       // stop
+//       waypoint_move_here_2d(WP_GOAL);
+//       waypoint_move_here_2d(WP_TRAJECTORY);
 
-      increase_nav_heading(heading_increment);
-      moveWaypointForward(WP_TRAJECTORY, 1.5f);
+//       increase_nav_heading(heading_increment);
+//       moveWaypointForward(WP_TRAJECTORY, 1.5f);
 
-      if (InsideObstacleZone(WaypointX(WP_TRAJECTORY),WaypointY(WP_TRAJECTORY))){
-        // add offset to head back into arena
-        increase_nav_heading(heading_increment);
+//       if (InsideObstacleZone(WaypointX(WP_TRAJECTORY),WaypointY(WP_TRAJECTORY))){
+//         // add offset to head back into arena
+//         increase_nav_heading(heading_increment);
 
-        navigation_state = SAFE;
-      }
-      break;
-    default:
-      break;
-  }
-  return;
-}
+//         navigation_state = SAFE;
+//       }
+//       break;
+//     default:
+//       break;
+//   }
+//   return;
+// }
 
-/*
- * Increases the NAV heading. Assumes heading is an INT32_ANGLE. It is bound in this function.
- */
-uint8_t increase_nav_heading(float incrementDegrees)
-{
-  float new_heading = stateGetNedToBodyEulers_f()->psi + RadOfDeg(incrementDegrees);
+// /*
+//  * Increases the NAV heading. Assumes heading is an INT32_ANGLE. It is bound in this function.
+//  */
+// uint8_t increase_nav_heading(float incrementDegrees)
+// {
+//   float new_heading = stateGetNedToBodyEulers_f()->psi + RadOfDeg(incrementDegrees);
 
-  // normalize heading to [-pi, pi]
-  FLOAT_ANGLE_NORMALIZE(new_heading);
+//   // normalize heading to [-pi, pi]
+//   FLOAT_ANGLE_NORMALIZE(new_heading);
 
-  // set heading, declared in firmwares/rotorcraft/navigation.h
-  // for performance reasons the navigation variables are stored and processed in Binary Fixed-Point format
-  nav_heading = ANGLE_BFP_OF_REAL(new_heading);
+//   // set heading, declared in firmwares/rotorcraft/navigation.h
+//   // for performance reasons the navigation variables are stored and processed in Binary Fixed-Point format
+//   nav_heading = ANGLE_BFP_OF_REAL(new_heading);
 
-  return false;
-}
+//   return false;
+// }
 
-/*
- * Calculates coordinates of distance forward and sets waypoint 'waypoint' to those coordinates
- */
-uint8_t moveWaypointForward(uint8_t waypoint, float distanceMeters)
-{
-  struct EnuCoor_i new_coor;
-  calculateForwards(&new_coor, distanceMeters);
-  moveWaypoint(waypoint, &new_coor);
-  return false;
-}
+// /*
+//  * Calculates coordinates of distance forward and sets waypoint 'waypoint' to those coordinates
+//  */
+// uint8_t moveWaypointForward(uint8_t waypoint, float distanceMeters)
+// {
+//   struct EnuCoor_i new_coor;
+//   calculateForwards(&new_coor, distanceMeters);
+//   moveWaypoint(waypoint, &new_coor);
+//   return false;
+// }
 
-/*
- * Calculates coordinates of a distance of 'distanceMeters' forward w.r.t. current position and heading
- */
-uint8_t calculateForwards(struct EnuCoor_i *new_coor, float distanceMeters)
-{
-  float heading  = stateGetNedToBodyEulers_f()->psi;
+// /*
+//  * Calculates coordinates of a distance of 'distanceMeters' forward w.r.t. current position and heading
+//  */
+// uint8_t calculateForwards(struct EnuCoor_i *new_coor, float distanceMeters)
+// {
+//   float heading  = stateGetNedToBodyEulers_f()->psi;
 
-  // Now determine where to place the waypoint you want to go to
-  new_coor->x = stateGetPositionEnu_i()->x + POS_BFP_OF_REAL(sinf(heading) * (distanceMeters));
-  new_coor->y = stateGetPositionEnu_i()->y + POS_BFP_OF_REAL(cosf(heading) * (distanceMeters));
-  return false;
-}
+//   // Now determine where to place the waypoint you want to go to
+//   new_coor->x = stateGetPositionEnu_i()->x + POS_BFP_OF_REAL(sinf(heading) * (distanceMeters));
+//   new_coor->y = stateGetPositionEnu_i()->y + POS_BFP_OF_REAL(cosf(heading) * (distanceMeters));
+//   return false;
+// }
 
-/*
- * Sets waypoint 'waypoint' to the coordinates of 'new_coor'
- */
-uint8_t moveWaypoint(uint8_t waypoint, struct EnuCoor_i *new_coor)
-{
-  waypoint_move_xy_i(waypoint, new_coor->x, new_coor->y);
-  return false;
-}
+// /*
+//  * Sets waypoint 'waypoint' to the coordinates of 'new_coor'
+//  */
+// uint8_t moveWaypoint(uint8_t waypoint, struct EnuCoor_i *new_coor)
+// {
+//   waypoint_move_xy_i(waypoint, new_coor->x, new_coor->y);
+//   return false;
+// }
 
 /* 
  * Saves a frame to disk for debugging the cv algorithm output

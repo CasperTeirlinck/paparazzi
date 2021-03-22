@@ -51,9 +51,9 @@ $ g++ test.cpp opencv_functions.cpp -o test \
 using namespace std;
 using namespace cv;
 
-// #define DATA_DIR "/paparazzi/prototyping/AE4317_2019_datasets/sim_poles_panels_mats/20190121-161931/"
+#define DATA_DIR "/paparazzi/prototyping/AE4317_2019_datasets/sim_poles_panels_mats/20190121-161931/"
 // #define DATA_DIR "/paparazzi/prototyping/AE4317_2019_datasets/test_set_single/"
-#define DATA_DIR "/paparazzi/prototyping/AE4317_2019_datasets/cyberzoo_poles_panels_mats/20190121-142935/"
+// #define DATA_DIR "/paparazzi/prototyping/AE4317_2019_datasets/cyberzoo_poles_panels_mats/20190121-142935/"
 #define DATA DATA_DIR "*.jpg"
 
 // Define settings
@@ -63,6 +63,8 @@ int eb_canny_thresh_1 = 200;
 int eb_canny_thresh_2 = 250;
 float eb_size_thresh = 75;
 int eb_diff_thresh = 60;
+
+int obstacles[520] = {0};
 
 int main()
 {
@@ -79,7 +81,7 @@ int main()
     Mat frame = imread(fn[i]);
     if (frame.empty()) continue; // skip loop if not succesfull
 
-    frame = get_obstacles_edgebox(frame, frame.size[1], frame.size[0]); // note: frame is rotated 90deg!
+    frame = get_obstacles_edgebox(frame, frame.size[1], frame.size[0], obstacles, 1); // note: frame is rotated 90deg!
 
     string filename = fn[i];
     filename.replace(filename.find(data_dir), data_dir.size()-1, "");

@@ -487,4 +487,11 @@
 #define JOYSTICK_ID 1
 #endif
 
+/* 
+ * OBSTACLES message
+ */
+#ifndef EDGEBOX_ID
+#define EDGEBOX_ID 1
+#endif
+
 #endif /* ABI_SENDER_IDS_H */
