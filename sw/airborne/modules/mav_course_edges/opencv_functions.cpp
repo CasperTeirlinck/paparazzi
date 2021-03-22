@@ -29,7 +29,7 @@ using namespace cv;
 
 // Define functions
 #if !USEDATASET
-void get_obstacles_edgebox(char *img, int w, int h, int *obstacles, int show_debug);
+void get_obstacles_edgebox(char *img, int w, int h, struct obstacles_t *obstacles, int show_debug);
 #else
 Mat get_obstacles_edgebox(Mat img, int w, int h, int *obstacles, int show_debug);
 #endif
@@ -38,7 +38,7 @@ Mat get_obstacles_edgebox(Mat img, int w, int h, int *obstacles, int show_debug)
  * Function to process frame with OpenCV and detect/calculate obstacle positions
  */
 #if !USEDATASET
-void get_obstacles_edgebox(char *img, int w, int h, int *obstacles, int show_debug) {
+void get_obstacles_edgebox(char *img, int w, int h, struct obstacles_t *obstacles, int show_debug) {
 #else
 Mat get_obstacles_edgebox(Mat img, int w, int h, int *obstacles, int show_debug) {
 #endif
@@ -89,7 +89,7 @@ Mat get_obstacles_edgebox(Mat img, int w, int h, int *obstacles, int show_debug)
 
   // Clear obstacles array
   for (int i = 0; i < h; i++) {
-    *(obstacles + i) = 0;
+    obstacles->x[i] = 0;
   }
 
   // Getting and filtering the bounding boxes
@@ -120,7 +120,7 @@ Mat get_obstacles_edgebox(Mat img, int w, int h, int *obstacles, int show_debug)
       int indexer_end = (boundRect[i].y + boundRect[i].height ) ;
       for (int j = indexer_begin; j < (indexer_end + 1); j++)
       {
-        *(obstacles + j) = 1;
+        obstacles->x[j] = 1;
       }
 
       // show box
@@ -143,7 +143,7 @@ Mat get_obstacles_edgebox(Mat img, int w, int h, int *obstacles, int show_debug)
     for (int y = 0; y < h; y++) {
       for (int x = 0; x < 20; x++) {
         Vec3b & color = image.at<Vec3b>(y, x);
-        if (*(obstacles + y)) {
+        if (obstacles->x[y]) {
           color[0] = 0;
           color[1] = 0;
           color[2] = 255;

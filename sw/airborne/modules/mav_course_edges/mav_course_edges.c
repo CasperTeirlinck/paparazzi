@@ -73,7 +73,9 @@ static char save_dir[256];
 #ifndef MT9F002_OUTPUT_HEIGHT
 #define MT9F002_OUTPUT_HEIGHT 520
 #endif
-int obstacles[MT9F002_OUTPUT_HEIGHT] = {0};
+
+// Define obstacles array
+static struct obstacles_t obstacles;
 
 /*
  * Initialisation function
@@ -83,10 +85,13 @@ void mav_course_edges_init(void)
   // Set frame output save path
   sprintf(save_dir, "%s/edgebox_capture", STRINGIFY(VIDEO_CAPTURE_PATH));
 
+  // Initialise obstacles array
+  for (int i = 0; i < MT9F002_OUTPUT_HEIGHT; i++) {
+    obstacles.x[i] = 0;
+  }
+
   // Attach callback function to the front camera for obstacle avoidance
-  cv_add_to_device(&front_camera, camera_cb, 0);
-  // Attach callback function to the front camera for debugging
-  cv_add_to_device(&front_camera, video_capture_cb, 2);
+  cv_add_to_device(&front_camera, camera_cb, 10);
 }
 
 /*
@@ -95,33 +100,18 @@ void mav_course_edges_init(void)
  * @return img
  */
 struct image_t *camera_cb(struct image_t *img)
-{
+{ 
+
   // get obstacles from opencv implementation
-  get_obstacles_edgebox((char *) img->buf, img->w, img->h, obstacles, show_debug);
+  get_obstacles_edgebox((char *) img->buf, img->w, img->h, &obstacles, show_debug);
 
-  return img;
-}
-
-/*
- * Callback from the camera for video capture
- * @param img - input image to process
- * @return img
- */
-struct image_t *video_capture_cb(struct image_t *img)
-{
   if (show_debug) {
     video_capture_save(img);
   }
 
-  return NULL;
-}
-
-/*
- * Function that sends the obstacle data
- */
-void mav_course_edges_periodic(void)
-{
   AbiSendMsgOBSTACLES(EDGEBOX_ID, obstacles);
+
+  return img;
 }
 
 /* 

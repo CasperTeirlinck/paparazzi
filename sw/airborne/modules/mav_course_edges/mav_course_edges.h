@@ -11,6 +11,14 @@
 #ifndef MAV_COURSE_EDGES_H
 #define MAV_COURSE_EDGES_H
 
+#ifndef MT9F002_OUTPUT_HEIGHT
+#define MT9F002_OUTPUT_HEIGHT 520
+#endif
+struct obstacles_t
+{
+  int x[MT9F002_OUTPUT_HEIGHT];
+};
+
 // settings
 extern float eb_hor_thresh;
 extern int eb_blur_size;
@@ -22,7 +30,6 @@ extern int show_debug;
 
 // functions
 extern void mav_course_edges_init(void);
-extern void mav_course_edges_periodic(void);
 
 #endif
 

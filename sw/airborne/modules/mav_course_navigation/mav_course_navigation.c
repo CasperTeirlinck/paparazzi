@@ -16,6 +16,7 @@
 #include "subsystems/abi.h"
 #include <stdio.h>
 #include <time.h>
+#include "modules/mav_course_edges/mav_course_edges.h"
 
 #define MAV_COURSE_NAVIGATION_VERBOSE TRUE
 
@@ -30,7 +31,6 @@
 #ifndef MT9F002_OUTPUT_HEIGHT
 #define MT9F002_OUTPUT_HEIGHT 520
 #endif
-int eb_obstacles[MT9F002_OUTPUT_HEIGHT] = {0};
 
 // Output from ground detection obstacle detection
 int vv1;
@@ -86,11 +86,13 @@ static void floor_detection_cb(uint8_t __attribute__((unused)) sender_id,
 #define EDGEBOX_ID ABI_BROADCAST
 #endif
 static abi_event edgebox_ev;
-static void edgebox_cb(uint8_t __attribute__((unused)) sender_id, int *obstacles)
+static void edgebox_cb(uint8_t __attribute__((unused)) sender_id, struct obstacles_t obstacles)
 {
+	printf("edgebox: ");
   for (int i = 0; i < MT9F002_OUTPUT_HEIGHT; i++) {
-    eb_obstacles[i] = *(obstacles + i);
+		printf("%d", obstacles.x[i]);
   }
+	printf(" \n");
 }
 
 /*
