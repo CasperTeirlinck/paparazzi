@@ -26,6 +26,13 @@
 #define VERBOSE_PRINT(...)
 #endif
 
+// Output from edgebox obstacle detection
+#ifndef MT9F002_OUTPUT_HEIGHT
+#define MT9F002_OUTPUT_HEIGHT 520
+#endif
+int eb_obstacles[MT9F002_OUTPUT_HEIGHT] = {0};
+
+// Output from ground detection obstacle detection
 int vv1;
 int vv2;
 int vv3;
@@ -36,7 +43,6 @@ int vv7;
 int vv8;
 int vv9;
 int vv10;
-
 
 /* 
  * Define global variables
@@ -76,12 +82,25 @@ static void floor_detection_cb(uint8_t __attribute__((unused)) sender_id,
   vv10 = v10;
 }
 
+#ifndef EDGEBOX_ID
+#define EDGEBOX_ID ABI_BROADCAST
+#endif
+static abi_event edgebox_ev;
+static void edgebox_cb(uint8_t __attribute__((unused)) sender_id, int *obstacles)
+{
+  for (int i = 0; i < MT9F002_OUTPUT_HEIGHT; i++) {
+    eb_obstacles[i] = *(obstacles + i);
+  }
+}
+
 /*
  * Initialisation function
  */
 void mav_course_navigation_init(void)
 {
   AbiBindMsgFLOOR_DETECTION(ABI_FLOOR_DETECTION_ID, &floor_detection_ev, floor_detection_cb);
+
+  AbiBindMsgOBSTACLES(EDGEBOX_ID, &edgebox_ev, edgebox_cb);
 }
 
 /*
