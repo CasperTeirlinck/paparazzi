@@ -220,8 +220,8 @@ void mav_course_navigation_periodic(void)
   // ------------------------- NAVIGATION MAIN START-------------------------------------
 
   // RECEIVE VIEW ARRAYS HERE
-  // int flag_bottom = RICARDO
-  // int angle_bottom = RICARDO
+  int flag_bottom = 0;
+  int angle_bottom = 10;
 
 
   len_view = sizeof(view_green)/sizeof(view_green[0]);  // Compute range of viewfield resolution
