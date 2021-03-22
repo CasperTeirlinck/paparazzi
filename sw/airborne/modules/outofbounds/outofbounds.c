@@ -27,8 +27,12 @@
 #include "subsystems/abi.h"
 #include "modules/outofbounds/opencv_functions.h"
 
-#ifndef FLOOR_DETECT_TYPE
-#define FLOOR_DETECT_TYPE 0 ///< 0 is simulation, 1 is real flight
+#ifndef BOUNDS_DETECT_TYPE
+#define BOUNDS_DETECT_TYPE 0 ///< 0 is simulation, 1 is real flight
+#endif
+
+#ifndef BOUNDS_DETECT_FPS
+#define BOUNDS_DETECT_FPS 0 ///< Default FPS (zero means run at camera fps)
 #endif
 
 //static struct image_t *camera_cb(struct image_t *img);
@@ -37,7 +41,7 @@ float result;
 
 struct image_t *camera_func(struct image_t *img)
 {
-  result = findColor((char *) img->buf, img->w, img->h, FLOOR_DETECT_TYPE);
+  result = findColor((char *) img->buf, img->w, img->h, BOUNDS_DETECT_TYPE);
 
   AbiSendMsgOUTOFBOUNDS(OUTOFBOUNDS_ID, result);
 
@@ -47,7 +51,7 @@ struct image_t *camera_func(struct image_t *img)
 void init_outofbounds(void)
 {
 	// Attach callback function to the front camera for obstacle avoidance
-  	cv_add_to_device(&bottom_camera, camera_func, 0);
+  	cv_add_to_device(&bottom_camera, camera_func, BOUNDS_DETECT_FPS);
  
     }
     
