@@ -40,7 +40,7 @@ int len_view, width_drone, center_view;
 float thresh_front, green_max;
 int flag_front, flag_heading, flag_go;
 
-int view_green[MT9F002_OUTPUT_HEIGHT], view_line[MT9F002_OUTPUT_HEIGHT];
+int view_green, view_line;
 
 // ------------------------- NAVIGATION GLOBAL VARIABLES END-------------------------------------
 
@@ -196,6 +196,7 @@ if(target > 0 && target < len_view){    // If suitable target is found within th
     flag_error = 0;                     // Set error flag to false
   }
 
+  flag_heading = flag_error;
   return target;  // Return target heading and error flag
 }
 
@@ -235,6 +236,8 @@ void mav_course_navigation_periodic(void)
   flag_go = 1;        // Initialize flag for go-command, only nullified when optimal in-bound heading is found
 
   int view_comb;  //[len_view]              // Initialize combined view-array
+
+  int heading;
 
   float len_view_float = (float)len_view;   // Initialize datatype-change variable
   float dy_ind, dy;         // Initialize index-difference between
