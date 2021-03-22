@@ -36,5 +36,7 @@ struct YUV_color{
     uint8_t u;
     uint8_t v;
 };
+extern struct YUV_color floor_min;
+extern struct YUV_color floor_max;
 
 #endif  // FLOOR_DETECTION_H
