@@ -209,3 +209,6 @@ venv
 # Testing datasets
 /prototyping/AE4317_2019_datasets
 /prototyping/paparazzi_capture
+
+# Testing binaries
+test
