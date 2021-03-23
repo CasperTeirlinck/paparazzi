@@ -76,15 +76,21 @@ int getContours(Mat imgMask, int j, bool val, float w, float h) {
 		myPoint.x = boundRect.x + boundRect.width / 2;
 		myPoint.y = boundRect.y + boundRect.height / 2;
 
-		if (myPoint.x >= (w / 2)) {
+		if (myPoint.y <= (h / 2)) {
 			dx = myPoint.x - (w / 2);
-			dy = myPoint.y;
-			result = (atan(dx / dy) * (180 / PI)) + 270;
+			dy = (h / 2) - myPoint.y;
+			if (myPoint.x >= (w / 2)){
+			result = -90 + (atan(dy / dx) * (180 / PI));}
+			else{
+			result = 90 - (atan(dy / -dx) * (180 / PI));}
 		}
 		else {
-			dx = (w / 2) - myPoint.x;
-			dy = myPoint.y;
-			result = 270 - (atan(dx / dy) * (180 / PI));
+			dx = myPoint.x - (w / 2);
+			dy = myPoint.y - (h / 2);
+			if (myPoint.x >= (w / 2)){
+			result = -90 - (atan(dy / dx) * (180 / PI));}
+			else{
+			result = 90 + (atan(dy / -dx) * (180 / PI));}
 		}
 	}
 	return aux;
