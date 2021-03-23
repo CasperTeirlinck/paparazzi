@@ -91,7 +91,8 @@ static void edgebox_cb(uint8_t __attribute__((unused)) sender_id, struct obstacl
 static abi_event outofbounds_ev;
 static void outofbounds_cb(uint8_t __attribute__((unused)) sender_id, float angle_rec)
 {
-  angle_bottom = angle_rec - 90;
+  angle_bottom = angle_rec;
+  printf("Angle bottom %f",angle_bottom);
 }
 
 // ------------------------- ABI COMMUNICATION END-------------------------------------
@@ -168,6 +169,11 @@ void mav_course_navigation_periodic(void)
 	else{// if there is no safe direction, stop and turn 60 degrees
 	  velocity = 0.0;
 	  headingchange  = 60.f; //now it always turns clockwise, maybe change
+	}
+
+	if (angle_bottom > 90 && angle_bottom < 270){
+		velocity = 0.0;
+		headingchange = angle_bottom; //Could be minus
 	}
 
 
