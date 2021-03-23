@@ -36,7 +36,9 @@
 
 // ------------------------- NAVIGATION GLOBAL VARIABLES START-------------------------------------
 
-int view_merge[MT9F002_OUTPUT_HEIGHT];
+int view_line[MT9F002_OUTPUT_HEIGHT], view_green[MT9F002_OUTPUT_HEIGHT], view_merge[MT9F002_OUTPUT_HEIGHT];
+float angle_bottom;
+
 
 // ------------------------- NAVIGATION GLOBAL VARIABLES END-------------------------------------
 
@@ -79,9 +81,9 @@ static void edgebox_cb(uint8_t __attribute__((unused)) sender_id, struct obstacl
 #define OUTOFBOUNDS_ID ABI_BROADCAST
 #endif
 static abi_event outofbounds_ev;
-static void outofbounds_cb(uint8_t __attribute__((unused)) sender_id, float relangle)
+static void outofbounds_cb(uint8_t __attribute__((unused)) sender_id, float angle_rec)
 {
-
+  angle_bottom = angle_rec - 90;
 }
 
 // ------------------------- ABI COMMUNICATION END-------------------------------------
@@ -196,5 +198,7 @@ void mav_course_navigation_periodic(void)
     guidance_h_set_guided_body_vel(velocity,0);
 
   }
+
+
   // ------------------------- NAVIGATION MAIN END-------------------------------------
 }
