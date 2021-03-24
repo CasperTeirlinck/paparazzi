@@ -65,15 +65,16 @@ int latest_edge_detection_message = 0;
 static abi_event floor_detection_ev;
 static void floor_detection_cb(uint8_t __attribute__((unused)) sender_id, struct FloorDetectionOutput green_detection)
 {
+	printf("View green:");
   for (int i = 0; i < MT9F002_OUTPUT_HEIGHT; i++) {
       view_green[i] = green_detection.obstacle_vector[i]; // View-analysis for green-detection
+      if (i % 50 == 0)
+          		printf(" %d", view_green[i]);
   }
-  printf("new green detection message %d\n",green_detection_message_number);
+	printf("\n");
+//  printf("new green detection message %d\n",green_detection_message_number);
   green_detection_message_number++;
 
-//    for (int i=0;i<520;i++){
-//        printf("%d, %d, \n", i, very_nice_output.obstacle_vector[i]);
-//    }
 }
 
 #ifndef EDGEBOX_ID
@@ -82,16 +83,15 @@ static void floor_detection_cb(uint8_t __attribute__((unused)) sender_id, struct
 static abi_event edgebox_ev;
 static void edgebox_cb(uint8_t __attribute__((unused)) sender_id, struct obstacles_t line_detection)
 {
+
   for (int i = 0; i < MT9F002_OUTPUT_HEIGHT; i++) {
       view_line[i] = line_detection.x[i]; // View-analysis for line-detection
   }
-  printf("Edge detection message %d\n",edge_detection_message_number);
+//  printf("Edge detection message %d\n",edge_detection_message_number);
   edge_detection_message_number++;
-//	printf("edgebox: ");
-//  for (int i = 0; i < MT9F002_OUTPUT_HEIGHT; i++) {
-//		printf("%d", obstacles.x[i]);
-//  }
-//	printf(" \n");
+
+
+
 }
 
 #ifndef OUTOFBOUNDS_ID
@@ -101,7 +101,9 @@ static abi_event outofbounds_ev;
 static void outofbounds_cb(uint8_t __attribute__((unused)) sender_id, float angle_rec)
 {
   angle_bottom = angle_rec;
+  if (angle_bottom>0.1 || angle_bottom<-0.1){
   printf("Out of bounds detection message %d, angle %f \n",out_of_bounds_message_number,angle_bottom);
+  }
   out_of_bounds_message_number++;
 
 }
@@ -132,19 +134,31 @@ void mav_course_navigation_init(void)
 
 void mav_course_navigation_periodic(void)
 {
+	int number_of_obstructed_columns = 0;
+
+	for (int i = 0; i < MT9F002_OUTPUT_HEIGHT; i++) {
+		  if (view_line[i]){
+			  printf("%d ",i);
+		  number_of_obstructed_columns++;
+		  }
+	  }
+	if (number_of_obstructed_columns>0){
+					printf("\n Line detection detects %d obstructed columns\n", number_of_obstructed_columns);
+				}
+
 	// stop if bottom camera indicates out of bounds
 	// run this even if no new green_detection_message
 	if (angle_bottom > 90 && angle_bottom < 270 && out_of_bounds_message_number > latest_out_of_bounds_message){
 		latest_out_of_bounds_message = out_of_bounds_message_number;
 				velocity = 0.0;
 				headingchange = angle_bottom; //Could be minus
-				guidance_h_set_guided_body_vel(velocity,0);
-				guidance_h_set_guided_heading(RadOfDeg(headingchange)+stateGetNedToBodyEulers_f()->psi);
-				VERBOSE_PRINT("OUT OF BOUNDS DETECTED, turning %.2f degrees\n",headingchange);
+//				guidance_h_set_guided_body_vel(velocity,0);
+//				guidance_h_set_guided_heading(RadOfDeg(headingchange)+stateGetNedToBodyEulers_f()->psi);
+				VERBOSE_PRINT("OUT OF BOUNDS DETECTED, would have turned %.2f degrees\n",headingchange);
 
 	}
 
-	else{ //if no out of bounds detected
+//	else{ //if no out of bounds detected
 		if (green_detection_message_number>latest_green_detection_message && edge_detection_message_number>latest_edge_detection_message){ // to prevent changing the heading multiple times for the same message
 			latest_green_detection_message = green_detection_message_number;
 			latest_edge_detection_message = edge_detection_message_number;
@@ -154,16 +168,17 @@ void mav_course_navigation_periodic(void)
 			int biggestright = 0;
 			int leftbound;
 			int rightbound;
+			int close_obstacle = 0;
 
 			for (int i=0;i<MT9F002_OUTPUT_HEIGHT;i++){
 			  if (holesize == 0){// looking for the start of a hole, holesize of 0 means we are not in a hole
-				if (view_green[i] == 0 && view_line[i] == 0){//it's the left bound
+				if ((view_green[i] == 0 || view_green[i] > 30) && view_line[i] == 0){//it's the left bound
 				  leftbound = i;
 				  holesize = holesize + 1;
 				}
 				}
 			  else{
-				if (view_green[i] == 0 && view_line[i] == 0){
+				if ((view_green[i] == 0 || view_green[i] > 30) && view_line[i] == 0){
 				  rightbound = i;
 				  holesize = holesize + 1;
 				  if (i==MT9F002_OUTPUT_HEIGHT-1){// if we are at the end of the data, we are also at the end of the hole
@@ -184,15 +199,28 @@ void mav_course_navigation_periodic(void)
 				  holesize = 0; //reset holesize
 				}
 			  }
+			  if (i>0.4*MT9F002_OUTPUT_HEIGHT && i<0.6*MT9F002_OUTPUT_HEIGHT && view_green[i]<5 && view_green[i]>0){
+				  close_obstacle = 1;
+
+			  }
 			}
 
 
-			if (biggesthole > 0){ //if there is a safe direction, turn to that direction
-			  velocity = 0.3;
-			  headingchange =( (biggestleft + biggestright)/2.f -MT9F002_OUTPUT_HEIGHT/2.)/(MT9F002_OUTPUT_HEIGHT/2.) * 52.f;
+			if (biggesthole > 0.06*MT9F002_OUTPUT_HEIGHT && !close_obstacle){ //if there is a safe direction, turn to that direction
+
+			  headingchange = (float)(0.5*(biggestleft+biggestright) - 259.5)/259.5 * 51.5;
+			  if (abs(headingchange) > 40){
+				  velocity = 0.0;
+			  }
+			  else{
+				  velocity = 0.3;
+			  }
 
 			}
 			else{// if there is no safe direction, stop and turn 60 degrees
+				if (close_obstacle){
+					VERBOSE_PRINT("CLOSE OBSTACLE, setting velocity to zero\n");
+				}
 			  velocity = 0.0;
 			  headingchange  = 60.f; //now it always turns clockwise, maybe change
 			}
@@ -200,12 +228,14 @@ void mav_course_navigation_periodic(void)
 
 
 
+
+
 			guidance_h_set_guided_body_vel(velocity,0);
 			guidance_h_set_guided_heading(RadOfDeg(headingchange)+stateGetNedToBodyEulers_f()->psi);
 
-			VERBOSE_PRINT("biggesthole %d, headingchange %.2f, velocity %.2f\n",biggesthole,headingchange,velocity);
+			VERBOSE_PRINT("biggesthole %d, location %.2f, headingchange %.2f, velocity %.2f\n",biggesthole,(float)(0.5*(biggestleft+biggestright) - 259.5)/259.5,headingchange,velocity);
 			}
-		}
+//		}//end else statement
 
 
 
