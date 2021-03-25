@@ -44,10 +44,10 @@
 struct YUV_color floor_simu_min = {80, 0, 0};
 struct YUV_color floor_simu_max = {105, 105, 135};
 
-// Define the YUV range for the green floow for Gazebo
+// Define the YUV range for the green floow for Cyberzoo
 //TODO: Test this range on cyberzoo_poles_panels_mats - Daniel
-struct YUV_color floor_real_min = {47, 10, 70};
-struct YUV_color floor_real_max = {150, 133, 133};
+struct YUV_color floor_real_min = {69, 10, 75};
+struct YUV_color floor_real_max = {145, 133, 135};
 
 struct YUV_color floor_min;
 struct YUV_color floor_max;

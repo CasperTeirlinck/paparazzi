@@ -12,7 +12,7 @@
 
       <module name="floor_detection">
         <define name="FLOOR_DETECT_CAMERA" value="front_camera"/>
-        <define name="FLOOR_DETECT_FPS" value="0"/>
+        <define name="FLOOR_DETECT_FPS" value="5"/>
         <define name="FLOOR_DETECT_TYPE" value="1"/>  <!-- 1 for AP -->
       </module>
 
@@ -49,7 +49,7 @@
 
       <module name="floor_detection">
         <define name="FLOOR_DETECT_CAMERA" value="front_camera"/>
-        <define name="FLOOR_DETECT_FPS" value="1"/>
+        <define name="FLOOR_DETECT_FPS" value="5"/>
         <define name="FLOOR_DETECT_TYPE" value="0"/>  <!-- 0 for SIM -->
       </module>
 
@@ -64,10 +64,10 @@
         <define name="EB_SHOW_DEBUG" value="0"/>
       </module>
 
-      <module name="outofbounds">
-        <define name="BOUNDS_DETECT_FPS" value="1"/>
-        <define name="BOUNDS_DETECT_TYPE" value="0"/>
-      </module>
+<!--      <module name="outofbounds">-->
+<!--        <define name="BOUNDS_DETECT_FPS" value="1"/>-->
+<!--        <define name="BOUNDS_DETECT_TYPE" value="0"/>-->
+<!--      </module>-->
 
       <module name="mav_course_navigation"/>
 
