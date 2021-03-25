@@ -52,8 +52,9 @@ int edge_detection_message_number = 1;
 int latest_green_detection_message = 0;
 int latest_out_of_bounds_message = 0;
 int latest_edge_detection_message = 0;
-
-
+float integrated_velocity = 0;
+float loop_number = 0.0;
+float average_velocity;
 // ------------------------- NAVIGATION GLOBAL VARIABLES END-------------------------------------
 
 
@@ -134,6 +135,12 @@ void mav_course_navigation_init(void)
 
 void mav_course_navigation_periodic(void)
 {
+	// Only run the mudule if we are in the correct flight mode
+	  if (guidance_h.mode != GUIDANCE_H_MODE_GUIDED) {
+	    return;
+	  }
+
+	loop_number += 1.0f;
 	int number_of_obstructed_columns = 0;
 
 	for (int i = 0; i < MT9F002_OUTPUT_HEIGHT; i++) {
@@ -169,7 +176,9 @@ void mav_course_navigation_periodic(void)
 			int leftbound;
 			int rightbound;
 			int close_obstacle = 0;
+			int nothing_ahead = 1;
 
+			//analyze data
 			for (int i=0;i<MT9F002_OUTPUT_HEIGHT;i++){
 			  if (holesize == 0){// looking for the start of a hole, holesize of 0 means we are not in a hole
 				if ((view_green[i] == 0 || view_green[i] > 30) && view_line[i] == 0){//it's the left bound
@@ -192,48 +201,64 @@ void mav_course_navigation_periodic(void)
 			  }
 				else{// found the end of a hole
 				  if (holesize > biggesthole){//found the new biggest hole
-					biggesthole=holesize;
+					biggesthole = holesize;
 					biggestleft = leftbound;
 					biggestright = rightbound;
 				  }
 				  holesize = 0; //reset holesize
 				}
 			  }
-			  if (i>0.4*MT9F002_OUTPUT_HEIGHT && i<0.6*MT9F002_OUTPUT_HEIGHT && view_green[i]<5 && view_green[i]>0){
-				  close_obstacle = 1;
 
+
+			  if (i>0.4*MT9F002_OUTPUT_HEIGHT && i<0.6*MT9F002_OUTPUT_HEIGHT && view_green[i]<5 && view_green[i]>0){
+				  VERBOSE_PRINT("%d, ",i);
+				  close_obstacle = 1;
+			  }
+			  if(i>0.3*MT9F002_OUTPUT_HEIGHT && i<0.7*MT9F002_OUTPUT_HEIGHT && view_green[i]>0){
+				  nothing_ahead = 0;
 			  }
 			}
 
-
+			//choose decision
 			if (biggesthole > 0.06*MT9F002_OUTPUT_HEIGHT && !close_obstacle){ //if there is a safe direction, turn to that direction
 
 			  headingchange = (float)(0.5*(biggestleft+biggestright) - 259.5)/259.5 * 51.5;
 			  if (abs(headingchange) > 40){
 				  velocity = 0.0;
 			  }
-			  else{
+			  else if(abs(headingchange)>10){
 				  velocity = 0.3;
 			  }
+			  else if (abs(headingchange)<5 && nothing_ahead){
+				  velocity = 1.0;
+			  }
+			  else{
+				  velocity = 0.5;
+			  			  }
 
 			}
 			else{// if there is no safe direction, stop and turn 60 degrees
 				if (close_obstacle){
-					VERBOSE_PRINT("CLOSE OBSTACLE, setting velocity to zero\n");
+					VERBOSE_PRINT("\nCLOSE OBSTACLE, setting velocity to zero\n");
 				}
 			  velocity = 0.0;
 			  headingchange  = 60.f; //now it always turns clockwise, maybe change
+
+
 			}
 
 
 
 
 
-
+			//execute decision
 			guidance_h_set_guided_body_vel(velocity,0);
 			guidance_h_set_guided_heading(RadOfDeg(headingchange)+stateGetNedToBodyEulers_f()->psi);
 
-			VERBOSE_PRINT("biggesthole %d, location %.2f, headingchange %.2f, velocity %.2f\n",biggesthole,(float)(0.5*(biggestleft+biggestright) - 259.5)/259.5,headingchange,velocity);
+			integrated_velocity = integrated_velocity + velocity;
+			average_velocity = integrated_velocity/loop_number;
+			VERBOSE_PRINT("average velocity: %.1f\n",average_velocity);
+			VERBOSE_PRINT("left %d, right %d, biggesthole %d, location %.2f, headingchange %.2f, velocity %.2f\n",biggestleft,biggestright,biggesthole,(float)(0.5*(biggestleft+biggestright) - 259.5)/259.5,headingchange,velocity);
 			}
 //		}//end else statement
 
