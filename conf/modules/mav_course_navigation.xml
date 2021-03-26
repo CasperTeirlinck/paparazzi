@@ -11,7 +11,7 @@
     <file name="mav_course_navigation.h"/>
   </header>
   <init fun="mav_course_navigation_init()"/>
-  <periodic fun="mav_course_navigation_periodic()" freq="1"/>
+  <periodic fun="mav_course_navigation_periodic()" freq="5"/>
   <makefile target="ap|nps">
     <file name="mav_course_navigation.c"/>
   </makefile>

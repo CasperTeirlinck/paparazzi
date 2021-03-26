@@ -27,10 +27,10 @@
         <define name="EB_SHOW_DEBUG" value="0"/>
       </module>
 
-      <module name="outofbounds">
+      <!-- <module name="outofbounds">
         <define name="BOUNDS_DETECT_FPS" value="1"/>
         <define name="BOUNDS_DETECT_TYPE" value="1"/>
-      </module>
+      </module> -->
 
       <module name="mav_course_navigation"/>
       

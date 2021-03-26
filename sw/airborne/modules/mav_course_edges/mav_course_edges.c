@@ -84,7 +84,7 @@ void mav_course_edges_init(void)
   }
 
   // Attach callback function to the front camera for obstacle avoidance
-  cv_add_to_device(&front_camera, camera_cb, 1);
+  cv_add_to_device(&front_camera, camera_cb, 5);
 }
 
 /*
