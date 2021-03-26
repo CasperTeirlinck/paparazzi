@@ -31,6 +31,9 @@ static struct image_t *video_capture_cb(struct image_t *img);
 static void video_capture_save(struct image_t *img);
 
 // Define settings
+#ifndef EB_FPS
+#define EB_FPS 0
+#endif
 #ifndef EB_HOR_THRESH
 #define EB_HOR_THRESH 0.6
 #endif
@@ -84,7 +87,7 @@ void mav_course_edges_init(void)
   }
 
   // Attach callback function to the front camera for obstacle avoidance
-  cv_add_to_device(&front_camera, camera_cb, 5);
+  cv_add_to_device(&EB_CAMERA, camera_cb, EB_FPS);
 }
 
 /*
