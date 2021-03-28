@@ -18,7 +18,7 @@ using namespace std;
 using namespace cv;
 
 // When using thet dataset images instead of the camera feed
-#define USEDATASET 0
+#define USEDATASET 1
 
 #if !USEDATASET
 // include for acceccing the module settings
@@ -31,7 +31,7 @@ using namespace cv;
 #if !USEDATASET
 void get_obstacles_edgebox(char *img, int w, int h, struct obstacles_t *obstacles, int show_debug);
 #else
-Mat get_obstacles_edgebox(Mat img, int w, int h, int *obstacles, int show_debug);
+Mat get_obstacles_edgebox(Mat img, int w, int h, struct obstacles_t *obstacles, int show_debug);
 #endif
 
 /* 
@@ -40,7 +40,7 @@ Mat get_obstacles_edgebox(Mat img, int w, int h, int *obstacles, int show_debug)
 #if !USEDATASET
 void get_obstacles_edgebox(char *img, int w, int h, struct obstacles_t *obstacles, int show_debug) {
 #else
-Mat get_obstacles_edgebox(Mat img, int w, int h, int *obstacles, int show_debug) {
+Mat get_obstacles_edgebox(Mat img, int w, int h, struct obstacles_t *obstacles, int show_debug) {
 #endif
 
   // Transform image buffer into an OpenCV YUV422 Mat

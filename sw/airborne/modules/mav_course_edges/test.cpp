@@ -51,20 +51,36 @@ $ g++ test.cpp opencv_functions.cpp -o test \
 using namespace std;
 using namespace cv;
 
-#define DATA_DIR "/paparazzi/prototyping/AE4317_2019_datasets/sim_poles_panels_mats/20190121-161931/"
+#define DATA_DIR "/paparazzi/prototyping/AE4317_2019_datasets/flight_25032021/"
+// #define DATA_DIR "/paparazzi/prototyping/AE4317_2019_datasets/sim_poles_panels_mats/20190121-161931/"
 // #define DATA_DIR "/paparazzi/prototyping/AE4317_2019_datasets/test_set_single/"
 // #define DATA_DIR "/paparazzi/prototyping/AE4317_2019_datasets/cyberzoo_poles_panels_mats/20190121-142935/"
 #define DATA DATA_DIR "*.jpg"
 
 // Define settings
-float eb_hor_thresh = 0.4;
-int eb_blur_size = 41;
+/* Sim */
+// float eb_hor_thresh = 0.6;
+// int eb_blur_size = 41;
+// int eb_canny_thresh_1 = 200;
+// int eb_canny_thresh_2 = 250;
+// float eb_size_thresh = 75;
+// int eb_diff_thresh = 60;
+/*  Real, dataset */
+// float eb_hor_thresh = 0.6;
+// int eb_blur_size = 25;
+// int eb_canny_thresh_1 = 200;
+// int eb_canny_thresh_2 = 100;
+// float eb_size_thresh = 75;
+// int eb_diff_thresh = 100;
+/* Real, test flight */
+float eb_hor_thresh = 0.6;
+int eb_blur_size = 25;
 int eb_canny_thresh_1 = 200;
-int eb_canny_thresh_2 = 250;
+int eb_canny_thresh_2 = 100;
 float eb_size_thresh = 75;
-int eb_diff_thresh = 60;
+int eb_diff_thresh = 100;
 
-int obstacles[520] = {0};
+static struct obstacles_t obstacles;
 
 int main()
 {
@@ -75,13 +91,18 @@ int main()
   string data = (string) getenv("HOME") + DATA;
   glob(data, fn, false);
 
+  // Initialise obstacles array
+  for (int i = 0; i < 520; i++) {
+    obstacles.x[i] = 0;
+  }
+
   // Loop trough frames
   for (size_t i=0; i<fn.size(); i++)
   {
     Mat frame = imread(fn[i]);
     if (frame.empty()) continue; // skip loop if not succesfull
 
-    frame = get_obstacles_edgebox(frame, frame.size[1], frame.size[0], obstacles, 1); // note: frame is rotated 90deg!
+    frame = get_obstacles_edgebox(frame, frame.size[1], frame.size[0], &obstacles, 1); // note: frame is rotated 90deg!
 
     string filename = fn[i];
     filename.replace(filename.find(data_dir), data_dir.size()-1, "");

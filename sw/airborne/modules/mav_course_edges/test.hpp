@@ -19,4 +19,9 @@ extern int eb_canny_thresh_2;
 extern float eb_size_thresh;
 extern int eb_diff_thresh;
 
+struct obstacles_t
+{
+  int x[520];
+};
+
 #endif

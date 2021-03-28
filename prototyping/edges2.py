@@ -14,9 +14,27 @@ datasets = [
     'sim_poles/20190121-160844',                  # 5
     'sim_poles_panels/20190121-161422',           # 6
     'sim_poles_panels_mats/20190121-161931',      # 7
+    'flight_25032021'                             # 8
 ]
-FRAMESDIR = datasets[5]
+FRAMESDIR = datasets[4]
 PATH = os.path.dirname(os.path.realpath(__file__))
+
+# Define default settings
+""" Real, dataset """
+hor_thresh = 0.6
+blur_size = 25
+canny_thresh_1 = 200
+canny_thresh_2 = 100
+size_thresh = 75
+diff_thresh = 350 # python
+# diff_thresh = 100 # c#
+""" Real, testflight """
+# hor_thresh = 0.6
+# blur_size = 25
+# canny_thresh_1 = 200
+# canny_thresh_2 = 100
+# size_thresh = 75
+# diff_thresh = 100
 
 # load and sort frames from data directory
 frames = glob.glob(PATH+'/AE4317_2019_datasets/'+FRAMESDIR+'/*.jpg')
@@ -122,12 +140,12 @@ def trackbar_cb(x, frames):
 
 cv2.namedWindow('window')
 cv2.createTrackbar('frame', 'window', 0, len(frames), lambda x: trackbar_cb(x, frames))
-cv2.createTrackbar('Edge - blur_size', 'window', 12, 20, lambda x: trackbar_cb(i, frames))
-cv2.createTrackbar('Edge - canny_threshold1', 'window', 200, 255, lambda x: trackbar_cb(i, frames))
-cv2.createTrackbar('Edge - canny_threshold2', 'window', 100, 255, lambda x: trackbar_cb(i, frames))
-cv2.createTrackbar('BoundBox - size_threshold', 'window', 75, 100, lambda x: trackbar_cb(i, frames))
-cv2.createTrackbar('BoundBox - texture_threshold', 'window', 350, 1000, lambda x: trackbar_cb(i, frames))
-cv2.createTrackbar('horizontal_threshold', 'window', 60, 100, lambda x: trackbar_cb(i, frames))
+cv2.createTrackbar('Edge - blur_size', 'window', blur_size//2, 20, lambda x: trackbar_cb(i, frames))
+cv2.createTrackbar('Edge - canny_threshold1', 'window', canny_thresh_1, 255, lambda x: trackbar_cb(i, frames))
+cv2.createTrackbar('Edge - canny_threshold2', 'window', canny_thresh_2, 255, lambda x: trackbar_cb(i, frames))
+cv2.createTrackbar('BoundBox - size_threshold', 'window', size_thresh, 100, lambda x: trackbar_cb(i, frames))
+cv2.createTrackbar('BoundBox - texture_threshold', 'window', diff_thresh, 1000, lambda x: trackbar_cb(i, frames))
+cv2.createTrackbar('horizontal_threshold', 'window', int(hor_thresh*100), 100, lambda x: trackbar_cb(i, frames))
 
 # Loop
 while True:
