@@ -18,6 +18,7 @@
 
       <!-- Obstacle avoidance using edgedetection -->
       <module name="mav_course_edges">
+        <define name="EB_ACTIVE" value="0"/> <!-- turned off by default due to uncertain tuning -->
         <define name="EB_CAMERA" value="front_camera"/>
         <define name="EB_FPS" value="5"/>
         <define name="EB_HOR_THRESH" value="0.6"/>
@@ -49,7 +50,8 @@
       </module>
 
       <!-- Obstacle avoidance using edgedetection -->
-      <!-- <module name="mav_course_edges">
+      <module name="mav_course_edges">
+        <define name="EB_ACTIVE" value="0"/>  <!-- turned off by default due to uncertain tuning -->
         <define name="EB_CAMERA" value="front_camera"/>
         <define name="EB_FPS" value="5"/>
         <define name="EB_HOR_THRESH" value="0.6"/>
@@ -59,7 +61,7 @@
         <define name="EB_SIZE_THRESH" value="75"/>
         <define name="EB_DIFF_THRESH" value="60"/>
         <define name="EB_SHOW_DEBUG" value="0"/>
-      </module> -->
+      </module>
 
 <!--      <module name="outofbounds">-->
 <!--        <define name="BOUNDS_DETECT_FPS" value="1"/>-->

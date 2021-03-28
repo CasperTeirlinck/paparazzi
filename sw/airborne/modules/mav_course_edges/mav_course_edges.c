@@ -1,6 +1,20 @@
 /*
+ * 
+ * This file is part of Paparazzi.
  *
- * This file is part of paparazzi
+ * Paparazzi is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2, or (at your option)
+ * any later version.
+ *
+ * Paparazzi is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Paparazzi; see the file COPYING.  If not, see
+ * <http://www.gnu.org/licenses/>.
  *
  */
 /**
@@ -10,7 +24,6 @@
 
 #include "modules/mav_course_edges/mav_course_edges.h"
 #include "subsystems/abi.h"
-// #include "firmwares/rotorcraft/navigation.h"
 #include "generated/airframe.h"
 #include "state.h"
 #include <time.h>
@@ -31,6 +44,9 @@ static struct image_t *video_capture_cb(struct image_t *img);
 static void video_capture_save(struct image_t *img);
 
 // Define settings
+#ifndef EB_ACTIVE
+#define EB_ACTIVE 0
+#endif
 #ifndef EB_FPS
 #define EB_FPS 0
 #endif
@@ -56,6 +72,7 @@ static void video_capture_save(struct image_t *img);
 #define EB_SHOW_DEBUG 0
 #endif
 
+int eb_active = EB_ACTIVE;
 float eb_hor_thresh = EB_HOR_THRESH;
 int eb_blur_size = EB_BLUR_SIZE;
 int eb_canny_thresh_1 = EB_CANNY_THRESH_1;
@@ -96,15 +113,18 @@ void mav_course_edges_init(void)
  * @return img
  */
 struct image_t *camera_cb(struct image_t *img)
-{ 
+{
+  if (eb_active) {
+    // get obstacles from opencv implementation
+    get_obstacles_edgebox((char *) img->buf, img->w, img->h, &obstacles, show_debug);
 
-  // get obstacles from opencv implementation
-  get_obstacles_edgebox((char *) img->buf, img->w, img->h, &obstacles, show_debug);
-
-  if (show_debug) {
-    video_capture_save(img);
+    // Save annotations on frame
+    if (show_debug) {
+      video_capture_save(img);
+    }
   }
 
+  // Send ABI message
   AbiSendMsgOBSTACLES(EDGEBOX_ID, obstacles);
 
   return img;

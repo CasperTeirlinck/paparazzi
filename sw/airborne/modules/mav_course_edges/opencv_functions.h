@@ -1,3 +1,6 @@
+/* 
+ * This file contains the OpenCV functions used in the mav_course_edges paparazzi module.
+ */
 /**
  * @file "modules/mav_course_edges/opencv_functions.h"
  * @author Group 3 MAV course 2021

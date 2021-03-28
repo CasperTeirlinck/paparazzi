@@ -1,3 +1,7 @@
+/* 
+ * This file contains the OpenCV functions used in the mav_course_edges paparazzi module.
+ * 
+ */
 /**
  * @file "modules/mav_course_edges/opencv_functions.cpp"
  * @author Group 3 MAV course 2021
@@ -42,6 +46,8 @@ void get_obstacles_edgebox(char *img, int w, int h, struct obstacles_t *obstacle
 #else
 Mat get_obstacles_edgebox(Mat img, int w, int h, struct obstacles_t *obstacles, int show_debug) {
 #endif
+
+  printf("test");
 
   // Transform image buffer into an OpenCV YUV422 Mat
   #if !USEDATASET
@@ -138,7 +144,7 @@ Mat get_obstacles_edgebox(Mat img, int w, int h, struct obstacles_t *obstacles, 
     }
   }
 
-  // Show obstacles array
+  // Show obstacles array on the bottom the image
   if (show_debug) {
     for (int y = 0; y < h; y++) {
       for (int x = 0; x < 20; x++) {
