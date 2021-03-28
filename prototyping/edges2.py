@@ -16,25 +16,26 @@ datasets = [
     'sim_poles_panels_mats/20190121-161931',      # 7
     'flight_25032021'                             # 8
 ]
-FRAMESDIR = datasets[4]
+FRAMESDIR = datasets[8]
 PATH = os.path.dirname(os.path.realpath(__file__))
 
 # Define default settings
 """ Real, dataset """
+# hor_thresh = 0.6
+# blur_size = 25
+# canny_thresh_1 = 200
+# canny_thresh_2 = 100
+# size_thresh = 75
+# diff_thresh = 350 # python
+# # diff_thresh = 100 # c++
+""" Real, testflight """
 hor_thresh = 0.6
 blur_size = 25
 canny_thresh_1 = 200
 canny_thresh_2 = 100
 size_thresh = 75
 diff_thresh = 350 # python
-# diff_thresh = 100 # c#
-""" Real, testflight """
-# hor_thresh = 0.6
-# blur_size = 25
-# canny_thresh_1 = 200
-# canny_thresh_2 = 100
-# size_thresh = 75
-# diff_thresh = 100
+# diff_thresh = 100 # c++
 
 # load and sort frames from data directory
 frames = glob.glob(PATH+'/AE4317_2019_datasets/'+FRAMESDIR+'/*.jpg')

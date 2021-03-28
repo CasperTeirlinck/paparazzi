@@ -207,8 +207,9 @@ venv
 /run.sh
 
 # Testing datasets
-/prototyping/AE4317_2019_datasets
+/prototyping/AE4317_2019_datasets/*
 /prototyping/paparazzi_capture
+!/prototyping/AE4317_2019_datasets/flight_25032021/
 
 # Testing binaries
 test

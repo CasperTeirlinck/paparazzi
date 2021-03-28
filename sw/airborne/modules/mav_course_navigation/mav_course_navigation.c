@@ -168,7 +168,7 @@ void mav_course_navigation_periodic(void)
 //	else{ //if no out of bounds detected
 		if (green_detection_message_number>latest_green_detection_message && edge_detection_message_number>latest_edge_detection_message){ // to prevent changing the heading multiple times for the same message
 			latest_green_detection_message = green_detection_message_number;
-			latest_edge_detection_message = edge_detection_message_number;
+			// latest_edge_detection_message = edge_detection_message_number; 
 			int holesize = 0;
 			int biggesthole = 0;
 			int biggestleft = 0;
