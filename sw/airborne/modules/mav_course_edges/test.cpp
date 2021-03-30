@@ -51,7 +51,8 @@ $ g++ test.cpp opencv_functions.cpp -o test \
 using namespace std;
 using namespace cv;
 
-#define DATA_DIR "/paparazzi/prototyping/AE4317_2019_datasets/flight_25032021/"
+// #define DATA_DIR "/paparazzi/prototyping/AE4317_2019_datasets/flight_25032021/"
+#define DATA_DIR "/paparazzi/prototyping/AE4317_2019_datasets/Exposure_10/"
 // #define DATA_DIR "/paparazzi/prototyping/AE4317_2019_datasets/sim_poles_panels_mats/20190121-161931/"
 // #define DATA_DIR "/paparazzi/prototyping/AE4317_2019_datasets/test_set_single/"
 // #define DATA_DIR "/paparazzi/prototyping/AE4317_2019_datasets/cyberzoo_poles_panels_mats/20190121-142935/"
@@ -73,12 +74,20 @@ using namespace cv;
 // float eb_size_thresh = 75;
 // int eb_diff_thresh = 100;
 /* Real, test flight */
-float eb_hor_thresh = 0.6;
-int eb_blur_size = 25;
-int eb_canny_thresh_1 = 200;
-int eb_canny_thresh_2 = 100;
+// float eb_hor_thresh = 0.6;
+// int eb_blur_size = 25;
+// int eb_canny_thresh_1 = 200;
+// int eb_canny_thresh_2 = 100;
+// float eb_size_thresh = 75;
+// int eb_diff_thresh = 100;
+/* Real, dataset Exp10 */
+float eb_hor_thresh = 0.4;
+int eb_blur_size = 21;
+int eb_canny_thresh_1 = 255;
+int eb_canny_thresh_2 = 150;
 float eb_size_thresh = 75;
-int eb_diff_thresh = 100;
+// int eb_diff_thresh = 100;
+int eb_diff_thresh = 25;
 
 static struct obstacles_t obstacles;
 
