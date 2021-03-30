@@ -19,7 +19,7 @@
 
       <!-- Obstacle avoidance using edgedetection -->
       <module name="mav_course_edges">
-        <define name="EB_ACTIVE" value="0"/> 
+        <define name="EB_ACTIVE" value="1"/> 
         <define name="EB_SHOW_DEBUG" value="0"/>
         <define name="EB_CAMERA" value="front_camera"/>
         <define name="EB_FPS" value="5"/>
@@ -61,7 +61,7 @@
 
       <!-- Obstacle avoidance using edgedetection -->
       <module name="mav_course_edges">
-        <define name="EB_ACTIVE" value="0"/>
+        <define name="EB_ACTIVE" value="1"/>
         <define name="EB_CAMERA" value="front_camera"/>
         <define name="EB_FPS" value="5"/>
         <define name="EB_SHOW_DEBUG" value="0"/>
