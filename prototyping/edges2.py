@@ -22,7 +22,7 @@ datasets = [
     'Exposure_10',                                # 13
     'Exposure_5',                                 # 14
 ]
-FRAMESDIR = datasets[13]
+FRAMESDIR = datasets[6]
 PATH = os.path.dirname(os.path.realpath(__file__))
 
 # Define default settings
@@ -43,13 +43,19 @@ PATH = os.path.dirname(os.path.realpath(__file__))
 # diff_thresh = 350 # python
 # # diff_thresh = 100 # c++
 """ Real, Exp30 """
+# hor_thresh = 0.6
+# blur_size = 21
+# canny_thresh_1 = 255
+# canny_thresh_2 = 150
+# size_thresh = 75
+# diff_thresh = 25
+""" Sim """
 hor_thresh = 0.6
-blur_size = 21
-canny_thresh_1 = 255
-canny_thresh_2 = 150
+blur_size = 41
+canny_thresh_1 = 200
+canny_thresh_2 = 250
 size_thresh = 75
-diff_thresh = 25 # python, with abs instead of **2
-# diff_thresh = 100 # c++
+diff_thresh = 25
 
 # load and sort frames from data directory
 frames = glob.glob(PATH+'/AE4317_2019_datasets/'+FRAMESDIR+'/*.jpg')
@@ -162,7 +168,7 @@ def process_frame(frame):
 
         # filter and show obstacles        
         color = (255, 0, 0)
-        if (boundRect_y < hor_thr) and (boundRect_area >= (boundRect_size_threshold/10000)*(w*h)) and (diff < boundRect_texture_threshold):
+        if ((boundRect_y+boundRect_h/2) < hor_thr) and (boundRect_area >= (boundRect_size_threshold/10000)*(w*h)) and (diff < boundRect_texture_threshold):
             color = (0, 0, 255)
             cv2.rectangle(frame_og2, (int(boundRect[0]), int(boundRect[1])), (int(boundRect[0]+boundRect[2]), int(boundRect[1]+boundRect[3])), color, 2)
 

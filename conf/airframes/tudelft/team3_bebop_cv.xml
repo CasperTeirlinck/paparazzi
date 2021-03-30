@@ -18,16 +18,24 @@
 
       <!-- Obstacle avoidance using edgedetection -->
       <module name="mav_course_edges">
-        <define name="EB_ACTIVE" value="0"/> <!-- turned off by default due to uncertain tuning -->
+        <define name="EB_ACTIVE" value="0"/> 
+        <define name="EB_SHOW_DEBUG" value="0"/>
         <define name="EB_CAMERA" value="front_camera"/>
         <define name="EB_FPS" value="5"/>
-        <define name="EB_HOR_THRESH" value="0.6"/>
-        <define name="EB_BLUR_SIZE" value="25"/>
+
+        <!-- Tuning for cyberzoo dataset -->
+        <!-- <define name="EB_BLUR_SIZE" value="25"/>
         <define name="EB_CANNY_THRESH_1" value="200"/>
         <define name="EB_CANNY_THRESH_2" value="100"/>
+        <define name="EB_SIZE_THRESH" value="25"/>
+        <define name="EB_DIFF_THRESH" value="100"/> -->
+        <!-- Tuning for cyberzoo exposure setting 10 -->
+        <define name="EB_BLUR_SIZE" value="21"/>
+        <define name="EB_CANNY_THRESH_1" value="255"/>
+        <define name="EB_CANNY_THRESH_2" value="150"/>
         <define name="EB_SIZE_THRESH" value="75"/>
-        <define name="EB_DIFF_THRESH" value="100"/>
-        <define name="EB_SHOW_DEBUG" value="0"/>
+        <define name="EB_DIFF_THRESH" value="25"/>
+        <define name="EB_HOR_THRESH" value="0.4"/>
       </module>
 
       <!-- <module name="outofbounds">
@@ -51,16 +59,17 @@
 
       <!-- Obstacle avoidance using edgedetection -->
       <module name="mav_course_edges">
-        <define name="EB_ACTIVE" value="0"/>  <!-- turned off by default due to uncertain tuning -->
+        <define name="EB_ACTIVE" value="0"/>
         <define name="EB_CAMERA" value="front_camera"/>
         <define name="EB_FPS" value="5"/>
-        <define name="EB_HOR_THRESH" value="0.6"/>
+        <define name="EB_SHOW_DEBUG" value="0"/>
+
         <define name="EB_BLUR_SIZE" value="41"/>
         <define name="EB_CANNY_THRESH_1" value="200"/>
         <define name="EB_CANNY_THRESH_2" value="250"/>
         <define name="EB_SIZE_THRESH" value="75"/>
-        <define name="EB_DIFF_THRESH" value="60"/>
-        <define name="EB_SHOW_DEBUG" value="0"/>
+        <define name="EB_DIFF_THRESH" value="25"/>
+        <define name="EB_HOR_THRESH" value="0.4"/>
       </module>
 
 <!--      <module name="outofbounds">-->
