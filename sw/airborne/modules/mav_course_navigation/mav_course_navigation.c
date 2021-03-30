@@ -232,7 +232,7 @@ void mav_course_navigation_periodic(void)
 			  else if (abs(headingchange)<5 && nothing_ahead){
 				  velocity = 1.0;
 			  }
-			  else{
+			  else{// if the heading change is between 5 and 10
 				  velocity = 0.5;
 			  			  }
 
