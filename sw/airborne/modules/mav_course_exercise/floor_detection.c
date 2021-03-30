@@ -38,16 +38,26 @@
 #define FLOOR_DETECT_TYPE 0 ///< 0 is simulation, 1 is real flight
 #endif
 
-//TODO: If I remember correctly, teh camera FPS was decreased for testing puropses by Sunyou - Dani
+#ifndef FLOOR_DETECT_USE_MEAN_Y
+#define FLOOR_DETECT_USE_MEAN_Y 1
+#endif
 
 // Define the YUV range for the green floow for Gazebo
 struct YUV_color floor_simu_min = {80, 0, 0};
 struct YUV_color floor_simu_max = {105, 105, 135};
 
 // Define the YUV range for the green floow for Cyberzoo
-//TODO: Test this range on cyberzoo_poles_panels_mats - Daniel
-struct YUV_color floor_real_min = {69, 10, 75};
-struct YUV_color floor_real_max = {145, 133, 135};
+struct YUV_color floor_real_min = {70, 0, 0};
+struct YUV_color floor_real_max = {200, 115, 150};
+
+int mean_y_threshold_low = 105;     // mean y threshold
+int mean_y_threshold_high = 160;    // if mean_y < low : use set1, elif mean_y < high : use set2, else: use set3
+struct YUV_color floor_set1_min = {69, 10, 75};         // old color range (original dataset)
+struct YUV_color floor_set1_max = {145, 133, 135};
+struct YUV_color floor_set2_min = {70, 0, 0};           // new color range (for brighter cyberzoo)
+struct YUV_color floor_set2_max = {200, 115, 150};
+struct YUV_color floor_set3_min = {70, 0, 0};           // new color range (for even brighter cyberzoo)
+struct YUV_color floor_set3_max = {200, 115, 150};
 
 struct YUV_color floor_min;
 struct YUV_color floor_max;
@@ -57,6 +67,7 @@ enum color_set {
     REAL
 };
 
+int is_first_run = 1;
 
 
 ///// I leave this for navigation guys!
@@ -112,8 +123,6 @@ void c_ground_obstacle_detect(struct image_t *input, int bottom_count, int certa
     int threat;
 //    int obstacle_sector_array[10] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
-    /// you can change the variable name if you want!
-    /// usage is something like this... detection_output.obstacle_vector[i] = 0;
     struct FloorDetectionOutput obstacle_sector_array;
 
     //Go through all pixels in pairs. Note that by default, the frame is rotated 90deg CW.
@@ -178,6 +187,45 @@ void c_ground_obstacle_detect(struct image_t *input, int bottom_count, int certa
 //                              obstacle_sector_array[8], obstacle_sector_array[9]);
 }
 
+// calculate mean y value within a certain range of the camera image (only the first frame)
+// and set color range according to the mean y value (floor_set1,2,3)
+// It can be disabled (<define name="FLOOR_DETECT_USE_MEAN_Y" value="0"/>) -> use default color range set
+void set_yuv_range(struct image_t *input) {
+    float mean_y = 0;
+    int count = 0;
+
+    //Go through all pixels in pairs.
+    uint8_t *pixel = (uint8_t *) input->buf;    //First pixel, top left
+    for (uint16_t i = 70; i < 450; i++) {
+
+        for (uint16_t j = 0; j < 50; j += 2) {
+            mean_y = (count*mean_y + pixel[1]) / (count+1);         // calculate mean y value (moving average)
+            count ++;
+
+            pixel += 4; //Go to the next pixel pair.
+        }
+    }
+    if (FLOOR_DETECT_USE_MEAN_Y) {
+        printf("FLOOR_DETECTION: mean_y %f\n", mean_y);
+        if (FLOOR_DETECT_TYPE == REAL) {
+//        printf("ap; ");
+            if (mean_y < mean_y_threshold_low) {
+                floor_min = floor_set1_min;
+                floor_max = floor_set1_max;
+            } else if (mean_y < mean_y_threshold_high) {
+                floor_min = floor_set2_min;
+                floor_max = floor_set2_max;
+            } else {
+                floor_min = floor_set3_min;
+                floor_max = floor_set3_max;
+            }
+        } else {
+//        printf("sim\n");
+        }
+    }
+    is_first_run = 0;
+}
+
 
 static struct image_t *floor_detect_cb(struct image_t *img){
 
@@ -186,8 +234,12 @@ static struct image_t *floor_detect_cb(struct image_t *img){
     //      ...Use this pixel count for bottom_count in ground_obstacle_detect
     //TODO:Alternatively measure how far the obstacle must be, so that it's bottom starts clipping in the image,
     //      ...and maybe take that distance as the safe distance in the periodic?
-
-    c_ground_obstacle_detect(img, 50, 6, floor_min.y, floor_max.y, floor_min.u, floor_max.u, floor_min.v, floor_max.v);
+    if (is_first_run){
+        set_yuv_range(img);
+    } else {
+        c_ground_obstacle_detect(img, 50, 6, floor_min.y, floor_max.y, floor_min.u, floor_max.u, floor_min.v,
+                                 floor_max.v);
+    }
 
     return img;
 }

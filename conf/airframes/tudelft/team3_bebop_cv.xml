@@ -14,6 +14,7 @@
         <define name="FLOOR_DETECT_CAMERA" value="front_camera"/>
         <define name="FLOOR_DETECT_FPS" value="5"/>
         <define name="FLOOR_DETECT_TYPE" value="1"/>  <!-- 1 for AP -->
+        <define name="FLOOR_DETECT_USE_MEAN_Y" value="1"/>
       </module>
 
       <!-- Obstacle avoidance using edgedetection -->
@@ -55,6 +56,7 @@
         <define name="FLOOR_DETECT_CAMERA" value="front_camera"/>
         <define name="FLOOR_DETECT_FPS" value="5"/>
         <define name="FLOOR_DETECT_TYPE" value="0"/>  <!-- 0 for SIM -->
+        <define name="FLOOR_DETECT_USE_MEAN_Y" value="1"/>
       </module>
 
       <!-- Obstacle avoidance using edgedetection -->
